@@ -33,6 +33,8 @@ dependencies:
   pdf: ^3.13.1
   printing: ^5.15.1
   share_plus: ^13.3.1
+  google_mlkit_text_recognition: ^1.0.3
+  tesseract_ocr: ^0.6.0
 
 dev_dependencies:
   flutter_test:
@@ -44,3 +46,13 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  assets:
+    # Tesseract models (tessdata_fast, Apache-2.0). The plugin copies them to
+    # app storage on first use; tessdata_config.json lists them.
+    - assets/tessdata_config.json
+    - assets/tessdata/
+    # Embedded in searchable PDFs for Bengali text (SIL OFL 1.1).
+    - assets/fonts/NotoSansBengali-Regular.ttf
+    # Shown in About → Open-source licenses.
+    - assets/licenses/
