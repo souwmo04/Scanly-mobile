@@ -21,6 +21,8 @@ import 'package:scanly/domain/repositories/document_repository.dart';
 import 'package:scanly/domain/repositories/settings_repository.dart';
 import 'package:scanly/domain/services/pdf_service.dart';
 
+import 'searchable_helpers.dart';
+
 class _FakeSettings implements SettingsRepository {
   AppSettings value = const AppSettings();
 
@@ -40,6 +42,7 @@ class _CountingBuilder extends PdfBuilder {
     required PdfExportOptions options,
     String? title,
     PdfProgress? onProgress,
+    List<PdfPageText?> pageTexts = const [],
   }) {
     calls++;
     return super.build(
@@ -47,6 +50,7 @@ class _CountingBuilder extends PdfBuilder {
       options: options,
       title: title,
       onProgress: onProgress,
+      pageTexts: pageTexts,
     );
   }
 }
@@ -79,6 +83,7 @@ void main() {
       documents: documents,
       storage: storage,
       settings: settings,
+      ocr: FakeOcrRepository(),
       builder: builder,
     );
   });
