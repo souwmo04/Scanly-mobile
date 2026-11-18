@@ -17,6 +17,8 @@ import '../../shared/providers/scanner_providers.dart';
 import '../../shared/widgets/action_sheet.dart';
 import '../../shared/widgets/dialogs.dart';
 import '../../shared/widgets/state_views.dart';
+import '../ocr/ocr_queue.dart';
+import '../settings/settings_controller.dart';
 
 /// Grid of a document's pages: reorder by long-press dragging, and edit,
 /// rotate, retake or delete each page. New pages can be scanned in.
@@ -101,7 +103,16 @@ class _PageOrganizerScreenState extends ConsumerState<PageOrganizerScreen> {
       case _PageAction.edit:
         await context.push(Routes.editPage(widget.documentId, page.id));
       case _PageAction.rotate:
-        await _run(page.id, () => ref.read(editPageProvider).rotate(page));
+        await _run(page.id, () async {
+          await ref.read(editPageProvider).rotate(page);
+          // The image changed, so its recognised text may be stale.
+          await ref
+              .read(ocrQueueProvider.notifier)
+              .pageImageChanged(
+                page.id,
+                autoOcr: ref.read(settingsControllerProvider).autoOcr,
+              );
+        });
       case _PageAction.retake:
         await context.push(Routes.scanRetake(page.id));
       case _PageAction.delete:

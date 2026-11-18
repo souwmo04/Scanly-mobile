@@ -15,6 +15,7 @@ import '../../shared/providers/core_providers.dart';
 import '../../shared/providers/scanner_providers.dart';
 import '../../shared/widgets/dialogs.dart';
 import '../../shared/widgets/state_views.dart';
+import '../ocr/ocr_queue.dart';
 import '../settings/settings_controller.dart';
 import 'crop_view.dart';
 
@@ -185,10 +186,19 @@ class _PageEditorState extends ConsumerState<_PageEditor> {
     }
     setState(() => _saving = true);
     try {
-      final quality = ref.read(settingsControllerProvider).compression;
+      final settings = ref.read(settingsControllerProvider);
+      final ocrQueue = ref.read(ocrQueueProvider.notifier);
       await ref
           .read(editPageProvider)
-          .save(widget.page, _edits, jpegQuality: quality.jpegQuality);
+          .save(
+            widget.page,
+            _edits,
+            jpegQuality: settings.compression.jpegQuality,
+          );
+      // The image changed, so its text is recognised again.
+      unawaited(
+        ocrQueue.pageImageChanged(widget.page.id, autoOcr: settings.autoOcr),
+      );
       if (mounted) context.pop(true);
     } on Object catch (e) {
       if (!mounted) return;
