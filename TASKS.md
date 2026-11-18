@@ -11,34 +11,38 @@ Legend: `[x]` done · `[ ]` to do · `[~]` in progress · `[!]` needs macOS / a 
 
 - [x] Inspect the repository (empty at start)
 - [x] Check the toolchain: Git 2.53, Java 26, Android SDK (platform 36.1, build-tools 36/37)
-- [ ] Install the Flutter stable SDK (not installed yet; it comes with Dart)
-- [ ] Run `flutter doctor` and accept the Android licenses
-- [ ] Make sure Gradle uses JDK 17/21 (Java 26 is too new for the Android Gradle Plugin)
+- [x] Install Flutter 3.50.0 / Dart 3.14.0 into `tools/flutter` (project-local, not on C:)
+- [x] Install a project-local Android SDK, NDK 28.2 and JDK 21 under `tools/`; `flutter doctor` passes for Android
+- [x] Accept the Android SDK licenses
 - [x] Initialize Git and connect the `origin` remote (github.com/souwmo04/Scanly-mobile)
 - [x] Write TASKS.md, README, CONTRIBUTING, CHANGELOG, LICENSE, PRIVACY, ARCHITECTURE
-- [ ] Set the GitHub repository description
+- [ ] Set the GitHub repository description (do this on GitHub; the `gh` CLI isn't installed)
 
-## Milestone 1: Foundation
+## Milestone 1: Foundation ✅
 
-- [ ] `flutter create --org com.scanly --platforms android,ios scanly`
-- [ ] Set Android minSdk 23 (needed by ML Kit / Tesseract) and the iOS deployment target to 15.5
-- [ ] Turn on strict lints (`flutter_lints` plus stricter analysis options)
-- [ ] Add pinned dependencies (each one checked for version, platforms, and maintenance)
-- [ ] Set up the folder structure from ARCHITECTURE.md
-- [ ] Design tokens: colors (navy/neutral), typography, spacing, radii, shadows
-- [ ] Light, dark, and system themes
-- [ ] Reusable widgets: buttons, cards, search bar, empty/loading/error states, dialogs, sheets
-- [ ] GoRouter shell with a 5-tab bottom navigation bar and a prominent Scan action
-- [ ] Riverpod bootstrap (`ProviderScope`, app-level providers)
-- [ ] Drift database: folders, documents, pages, and page_ocr tables, plus indexes
-- [ ] Turn on foreign keys and add a migration strategy
-- [ ] FTS5 virtual table for search
-- [ ] StorageService: per-document UUID folders, safe delete, size calculation, temp cleanup
-- [ ] Settings persistence (theme, scan quality, PDF format, OCR language)
-- [ ] Home, Files, Search, and Settings screens wired to real (empty) data
-- [ ] Unit tests: database CRUD, cascade delete, storage service
-- [ ] Widget tests: navigation shell, empty states
-- [ ] Build a debug APK
+- [x] `flutter create` for Android and iOS (`com.scanly.app`)
+- [x] Android minSdk 24 (Flutter default, covers ML Kit / Tesseract); iOS deployment target 15.5
+- [x] Release signing reads `android/key.properties`; release builds have no INTERNET permission
+- [x] Turn on strict lints (strict-casts/inference/raw-types plus extra rules)
+- [x] Dependencies resolved by pub for Flutter 3.50: Riverpod 3.5, GoRouter 18.1, Drift 2.35
+- [x] Feature-first folder structure (core / domain / data / features / shared)
+- [x] Design tokens: navy/neutral palette, typography, spacing, radii
+- [x] Light, dark, and system themes, switchable in Settings and persisted
+- [x] Reusable widgets: buttons, document/folder cards, search bar, empty/loading/error states, dialogs, action sheet, logo
+- [x] GoRouter shell with a 5-slot bottom navigation bar and a prominent Scan action
+- [x] Riverpod bootstrap with injected storage and preferences
+- [x] Drift database: folders, documents, pages, page_ocr, with indexes and foreign keys (CASCADE / SET NULL)
+- [x] Migration strategy and a check on every open that foreign keys are on
+- [x] FTS5 search index whose tokenizer keeps Bengali vowel signs inside words (tested)
+- [x] StorageService: per-document UUID folders, atomic writes, path safety, size calculation, temp cleanup
+- [x] Startup recovery: clear temp files and remove orphaned document folders
+- [x] Settings persistence (theme, scan quality, compression, PDF size and orientation, OCR language, auto-OCR)
+- [x] Home, Files (folders, favorites, sort, grid/list, multi-select), Folder, Search, Settings, Privacy, About, Document viewer
+- [x] Clear all data and storage usage
+- [x] Unit tests: storage (12), database/search (17), settings (3), formatters (4)
+- [x] Widget tests: navigation, scanner route, dark theme, folder creation, search (6)
+- [x] Build a debug APK; tested on the Android emulator (Pixel 10 Pro, Android 37) in light and dark mode
+- [x] The Scan route shows an honest "not available yet" screen until Milestone 2
 
 ## Milestone 2: Android scanner
 
