@@ -41,6 +41,25 @@ dart run build_runner build
 flutter run
 ```
 
+### Project-local toolchain (optional)
+
+The SDKs don't have to be installed system-wide. This repo is developed with everything
+under a git-ignored `tools/` folder:
+
+| Path | Contents |
+| --- | --- |
+| `tools/flutter` | Flutter stable (`git clone -b stable https://github.com/flutter/flutter.git`) |
+| `tools/jdk21` | Eclipse Temurin JDK 21 |
+| `tools/android-sdk` | cmdline-tools, platform-tools, platform 36, build-tools 36, NDK 28.2, CMake |
+| `tools/pub-cache`, `tools/gradle-home` | Dart and Gradle caches |
+
+Set `JAVA_HOME`, `ANDROID_HOME`, `PUB_CACHE` and `GRADLE_USER_HOME` to those folders, and put
+`tools/flutter/bin` on `PATH`. Then run:
+
+```bash
+flutter config --android-sdk tools/android-sdk --jdk-dir tools/jdk21
+```
+
 ## Building
 
 **Android test APK**
