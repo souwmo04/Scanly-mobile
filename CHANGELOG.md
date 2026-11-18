@@ -6,6 +6,20 @@ All notable changes to Scanly are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-19 (Milestone 7: Library)
+
+### Added
+- Search results grouped by document, with every matching page, filters (All, Documents,
+  Text, Folders) with counts, and recent searches.
+- Share several documents as PDFs at once.
+- Duplicate a document, including its edits and recognized text.
+- Document info sheet.
+- Folder sorting and an "Add documents" picker inside folders.
+- Favorite button removes favorites when every selected document already is one.
+
+### Fixed
+- Folder cards no longer overflow at large text sizes.
+
 ## [0.6.0] - 2026-11-19 (Milestone 6: OCR)
 
 ### Added
