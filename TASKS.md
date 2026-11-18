@@ -106,15 +106,20 @@ Legend: `[x]` done · `[ ]` to do · `[~]` in progress · `[!]` needs macOS / a 
 - [x] Tests: engine (19), UI (14). 184 total passing; release APK 62.3 MB, CAMERA permission only
 - [!] Check the PDF viewer, share sheet and print dialog on a physical phone
 
-## Milestone 6: OCR
+## Milestone 6: OCR ✅ (built with three parallel agents, reviewed and integrated)
 
-- [ ] English with ML Kit Text Recognition
-- [ ] Bangla with Tesseract `ben.traineddata` (check the Apache-2.0 license)
-- [ ] Mixed `eng+ben`, confidence-based merge without duplicate text
-- [ ] OCR progress, retry, and cancel
-- [ ] Store OCR text per page and index it in FTS5
-- [ ] Searchable PDF with an invisible text layer and an embedded Bengali font
-- [ ] OCR benchmark set (printed English, Bangla, mixed)
+- [x] English with ML Kit Text Recognition (bundled Latin model, works offline, line boxes); falls back to Tesseract `eng`
+- [x] Bangla with Tesseract `ben` (tessdata_fast, Apache-2.0, bundled; license shown in About)
+- [x] Mixed with a single Tesseract `ben+eng` pass, so no text is duplicated. **Note:** the Tesseract plugin returns no confidence scores, so confidence-based merging isn't possible. Users can re-run a page in another language and pick the better result
+- [x] Text clean-up that keeps ZWJ/ZWNJ and the danda (।)
+- [x] Background OCR queue: one page at a time, progress, retry failed pages, stop/resume, resume after restart, auto-run after scan/import (Settings → auto OCR), re-run after edit or rotate
+- [x] OCR stored per page (schema v4: lines with boxes, errors) and indexed in FTS5; global search and in-document search (Bengali-safe matching)
+- [x] Page text screen: selectable text, copy all, re-run in another language
+- [x] Searchable PDF: invisible text layer (render mode 3), Helvetica for Latin, subset-embedded Noto Sans Bengali with ToUnicode; boxes from ML Kit, even line distribution for Tesseract; cached PDFs refresh when OCR changes
+- [x] OCR benchmark: `integration_test/ocr_benchmark_test.dart` + docs/OCR_BENCHMARK.md (CER/WER, timing)
+- [x] Release shrinking rules for ML Kit and Tesseract (R8 failed without them)
+- [x] 278 tests passing; release APK builds (universal 115 MB; per-ABI or AAB is much smaller), CAMERA permission only
+- [!] Run the OCR benchmark and real Bangla/English scans on a physical Android phone and an iPhone
 
 ## Milestone 7: Library
 
