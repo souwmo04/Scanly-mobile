@@ -57,6 +57,8 @@ class FolderCard extends StatelessWidget {
                   Text(
                     count == 1 ? '1 document' : '$count documents',
                     style: theme.textTheme.bodySmall,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
