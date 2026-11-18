@@ -145,10 +145,25 @@ after the commit succeeds.
 
 ## OCR
 
-- `english` → ML Kit Text Recognition (Latin script)
-- `bangla` → Tesseract `ben`
-- `mixed` → Tesseract `eng+ben`, compared against ML Kit line by line and merged by
-  confidence so text isn't duplicated
+| Setting | Engine | Positions |
+| --- | --- | --- |
+| English | ML Kit Text Recognition, bundled Latin model; Tesseract `eng` if ML Kit fails | Line boxes |
+| বাংলা | Tesseract `ben` (tessdata_fast) | None (plain text) |
+| Bangla + English | One Tesseract `ben+eng` pass, so no text is duplicated | None |
+
+* `lib/data/services/ocr/`: adapters around the plugins, `DeviceOcrEngine` (routing,
+  fallback, error mapping to `OcrException`), text clean-up (keeps ZWJ/ZWNJ and ।) and
+  CER/WER metrics for the benchmark.
+* `OcrQueue` (`lib/features/ocr/ocr_queue.dart`) recognises one page at a time in the
+  background: pending → processing → done/failed, with retry, stop/resume and resume after
+  restart. Scans, imports, edits and rotations enqueue the affected pages.
+* `DriftOcrRepository` stores text, lines (JSON with normalised boxes) and errors in
+  `page_ocr`, and indexes the text in the FTS5 `search_index` in the same transaction.
+* The Tesseract plugin gives no confidence scores, so results from different engines are
+  not merged automatically. Users can re-run a page in another language.
+* Exported PDFs carry an invisible text layer: Helvetica for Latin-1, a subset of Noto Sans
+  Bengali (Type0/Identity-H with ToUnicode) for everything else. Glyphs are not shaped,
+  because the layer is invisible; search and copy rely on ToUnicode.
 
 ## Native integration risks
 
