@@ -2,13 +2,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/errors/app_exception.dart';
 import '../../core/routing/routes.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../domain/entities/scan_document.dart';
 import '../../domain/repositories/document_repository.dart';
 import '../../shared/providers/core_providers.dart';
+import '../../shared/widgets/dialogs.dart';
 import '../../shared/widgets/document_card.dart';
 import '../pdf_viewer/pdf_actions.dart';
+import 'bulk_share.dart';
 import 'document_actions.dart';
 import 'library_controller.dart';
 
@@ -125,19 +128,30 @@ class DocumentCollectionSliver extends ConsumerWidget {
 class SelectionAppBar extends ConsumerWidget implements PreferredSizeWidget {
   const SelectionAppBar({
     required this.selection,
-    required this.allIds,
+    required this.documents,
     super.key,
   });
 
   final SelectionController selection;
-  final List<String> allIds;
+
+  /// Every document on screen, in display order.
+  final List<ScanDocument> documents;
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final ids = selection.ids.toList();
+    final allIds = [for (final doc in documents) doc.id];
+    // Selected ids in the order the documents are shown on screen.
+    final ids = [
+      for (final id in allIds)
+        if (selection.contains(id)) id,
+    ];
+    final selected = documents.where((d) => selection.contains(d.id));
+    final allFavorites =
+        selected.isNotEmpty && selected.every((d) => d.isFavorite);
+
     return AppBar(
       leading: IconButton(
         tooltip: 'Cancel selection',
@@ -151,26 +165,42 @@ class SelectionAppBar extends ConsumerWidget implements PreferredSizeWidget {
           icon: const Icon(Icons.select_all_rounded),
           onPressed: () => selection.selectAll(allIds),
         ),
+        Builder(
+          builder: (buttonContext) => IconButton(
+            tooltip: 'Share',
+            icon: const Icon(Icons.ios_share_rounded),
+            onPressed: ids.isEmpty
+                ? null
+                : () async {
+                    final shared = await shareDocumentsFlow(
+                      context,
+                      ref,
+                      ids,
+                      origin: originOf(buttonContext),
+                    );
+                    if (shared) selection.clear();
+                  },
+          ),
+        ),
         IconButton(
-          tooltip: 'Add to favorites',
-          icon: const Icon(Icons.star_outline_rounded),
-          onPressed: () async {
-            final repo = ref.read(documentRepositoryProvider);
-            for (final id in ids) {
-              await repo.setFavorite(id, isFavorite: true);
-            }
-            selection.clear();
-          },
+          tooltip: allFavorites ? 'Remove from favorites' : 'Add to favorites',
+          icon: Icon(
+            allFavorites ? Icons.star_outline_rounded : Icons.star_rounded,
+          ),
+          onPressed: () =>
+              _setFavorites(context, ref, ids, isFavorite: !allFavorites),
         ),
         if (ids.length >= 2)
           IconButton(
             tooltip: 'Merge',
             icon: const Icon(Icons.merge_rounded),
             // Merged in the order the documents are shown on screen.
-            onPressed: () => mergeDocumentsFlow(context, ref, [
-              for (final id in allIds)
-                if (selection.contains(id)) id,
-            ], onMerged: selection.clear),
+            onPressed: () => mergeDocumentsFlow(
+              context,
+              ref,
+              ids,
+              onMerged: selection.clear,
+            ),
           ),
         IconButton(
           tooltip: 'Move to folder',
@@ -188,6 +218,34 @@ class SelectionAppBar extends ConsumerWidget implements PreferredSizeWidget {
         ),
       ],
     );
+  }
+
+  Future<void> _setFavorites(
+    BuildContext context,
+    WidgetRef ref,
+    List<String> ids, {
+    required bool isFavorite,
+  }) async {
+    final repo = ref.read(documentRepositoryProvider);
+    try {
+      for (final id in ids) {
+        await repo.setFavorite(id, isFavorite: isFavorite);
+      }
+    } on Object catch (error) {
+      if (context.mounted) showMessage(context, describeError(error));
+      return;
+    }
+    selection.clear();
+    if (context.mounted) {
+      final count = ids.length;
+      final what = count == 1 ? '1 document' : '$count documents';
+      showMessage(
+        context,
+        isFavorite
+            ? 'Added $what to favorites'
+            : 'Removed $what from favorites',
+      );
+    }
   }
 }
 
