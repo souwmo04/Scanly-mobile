@@ -33,7 +33,6 @@ linter:
     - require_trailing_commas
     - sort_child_properties_last
     - unawaited_futures
-    - unnecessary_await_in_return
     - unnecessary_lambdas
     - unnecessary_parenthesis
     - use_build_context_synchronously
