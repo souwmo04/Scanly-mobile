@@ -1,8 +1,22 @@
 import '../entities/folder.dart';
 
+/// Order of [FolderRepository.watchFolders].
+enum FolderSort {
+  /// Alphabetical, ignoring case.
+  nameAZ,
+
+  /// Most recent activity first: the folder's own changes or the latest
+  /// change to a document inside it.
+  recentlyUpdated,
+
+  /// Folders holding the most documents first (ties by name).
+  mostDocuments,
+}
+
 abstract interface class FolderRepository {
-  /// All folders with their document counts, sorted by name.
-  Stream<List<Folder>> watchFolders();
+  /// All folders with their document counts, in [sort] order (by name by
+  /// default).
+  Stream<List<Folder>> watchFolders({FolderSort sort = FolderSort.nameAZ});
 
   Future<Folder?> getFolder(String id);
 

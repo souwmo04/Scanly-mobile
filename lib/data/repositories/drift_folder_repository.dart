@@ -15,8 +15,9 @@ class DriftFolderRepository implements FolderRepository {
   final DateTime Function() _clock;
 
   @override
-  Stream<List<Folder>> watchFolders() {
+  Stream<List<Folder>> watchFolders({FolderSort sort = FolderSort.nameAZ}) {
     final docCount = _db.documents.id.count();
+    final lastDocChange = _db.documents.updatedAt.max();
     final query =
         _db.select(_db.folders).join([
             leftOuterJoin(
@@ -25,20 +26,50 @@ class DriftFolderRepository implements FolderRepository {
               useColumns: false,
             ),
           ])
-          ..addColumns([docCount])
+          ..addColumns([docCount, lastDocChange])
           ..groupBy([_db.folders.id])
           ..orderBy([
             OrderingTerm.asc(_db.folders.name.collate(Collate.noCase)),
           ]);
 
-    return query.watch().map(
-      (rows) => rows
-          .map(
-            (row) =>
-                _toEntity(row.readTable(_db.folders), row.read(docCount) ?? 0),
-          )
-          .toList(),
-    );
+    return query.watch().map((rows) {
+      final entries = [
+        for (final row in rows)
+          (
+            folder: _toEntity(
+              row.readTable(_db.folders),
+              row.read(docCount) ?? 0,
+            ),
+            lastDocChange: row.read(lastDocChange),
+          ),
+      ];
+      DateTime activity(({Folder folder, DateTime? lastDocChange}) entry) {
+        final own = entry.folder.updatedAt;
+        final docs = entry.lastDocChange;
+        return docs != null && docs.isAfter(own) ? docs : own;
+      }
+
+      // Rows arrive sorted by name; List.sort is not stable, so ties fall
+      // back to the name order explicitly via the original index.
+      final indexed = entries.indexed.toList();
+      switch (sort) {
+        case FolderSort.nameAZ:
+          break;
+        case FolderSort.recentlyUpdated:
+          indexed.sort((a, b) {
+            final byDate = activity(b.$2).compareTo(activity(a.$2));
+            return byDate != 0 ? byDate : a.$1.compareTo(b.$1);
+          });
+        case FolderSort.mostDocuments:
+          indexed.sort((a, b) {
+            final byCount = b.$2.folder.documentCount.compareTo(
+              a.$2.folder.documentCount,
+            );
+            return byCount != 0 ? byCount : a.$1.compareTo(b.$1);
+          });
+      }
+      return [for (final (_, entry) in indexed) entry.folder];
+    });
   }
 
   @override
