@@ -8,12 +8,14 @@ import '../../core/utils/formatters.dart';
 import '../../domain/entities/scan_document.dart';
 import '../../shared/providers/library_providers.dart';
 import '../../shared/widgets/app_logo.dart';
+import '../../shared/widgets/buttons.dart';
 import '../../shared/widgets/document_card.dart';
 import '../../shared/widgets/folder_card.dart';
 import '../../shared/widgets/scanly_search_bar.dart';
 import '../../shared/widgets/section_header.dart';
 import '../../shared/widgets/state_views.dart';
 import '../library/document_actions.dart';
+import '../scanner/import_flow.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -43,6 +45,22 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
             const SliverToBoxAdapter(child: _ScanHeroCard()),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.screenGutter,
+                  AppSpacing.md,
+                  AppSpacing.screenGutter,
+                  0,
+                ),
+                child: SecondaryButton(
+                  label: 'Import from photos',
+                  icon: Icons.photo_library_outlined,
+                  expand: true,
+                  onPressed: () => importImagesFromGallery(context, ref),
+                ),
+              ),
+            ),
             if (folderList.isNotEmpty) ...[
               SliverToBoxAdapter(
                 child: SectionHeader(
