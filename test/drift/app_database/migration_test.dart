@@ -9,6 +9,7 @@ import 'package:scanly/data/database/app_database.dart';
 import 'generated/schema.dart';
 import 'generated/schema_v1.dart' as v1;
 import 'generated/schema_v2.dart' as v2;
+import 'generated/schema_v3.dart' as v3;
 
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -88,6 +89,52 @@ void main() {
         expect(migrated.rotation, 90);
         expect(migrated.filterType, 'grayscale');
         expect(migrated.cropCorners, isNull);
+      },
+    );
+  });
+
+  test('v2 → v3 adds neutral adjustments and keeps crop corners', () async {
+    const createdAt = 1767225600;
+    await verifier.testWithDataIntegrity(
+      oldVersion: 2,
+      newVersion: 3,
+      createOld: v2.DatabaseAtV2.new,
+      createNew: v3.DatabaseAtV3.new,
+      openTestedDatabase: AppDatabase.forExecutor,
+      createItems: (batch, oldDb) {
+        batch
+          ..insert(
+            oldDb.documents,
+            const v2.DocumentsData(
+              id: 'd1',
+              title: 'Receipt',
+              pageCount: 1,
+              fileSize: 10,
+              isFavorite: 0,
+              createdAt: createdAt,
+              updatedAt: createdAt,
+            ),
+          )
+          ..insert(
+            oldDb.pages,
+            const v2.PagesData(
+              id: 'p1',
+              documentId: 'd1',
+              pageOrder: 0,
+              originalPath: '/o.jpg',
+              width: 10,
+              height: 10,
+              rotation: 0,
+              filterType: 'original',
+              createdAt: createdAt,
+              cropCorners: '[0.1,0.1,0.9,0.1,0.9,0.9,0.1,0.9]',
+            ),
+          );
+      },
+      validateItems: (newDb) async {
+        final page = await newDb.select(newDb.pages).getSingle();
+        expect(page.cropCorners, '[0.1,0.1,0.9,0.1,0.9,0.9,0.1,0.9]');
+        expect((page.brightness, page.contrast, page.sharpness), (0, 0, 0));
       },
     );
   });
