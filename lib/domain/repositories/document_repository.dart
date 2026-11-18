@@ -102,6 +102,10 @@ abstract interface class DocumentRepository {
 
   Future<void> rename(String id, String title);
 
+  /// Records the generated PDF (or null to forget it). Does not change the
+  /// document's modification time.
+  Future<void> setPdfPath(String id, String? pdfPath);
+
   Future<void> setFavorite(String id, {required bool isFavorite});
 
   Future<void> moveToFolder(List<String> ids, String? folderId);

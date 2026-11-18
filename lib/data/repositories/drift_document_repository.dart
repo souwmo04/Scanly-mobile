@@ -338,6 +338,13 @@ class DriftDocumentRepository implements DocumentRepository {
   }
 
   @override
+  Future<void> setPdfPath(String id, String? pdfPath) async {
+    await (_db.update(_db.documents)..where((d) => d.id.equals(id))).write(
+      DocumentsCompanion(pdfPath: Value(pdfPath)),
+    );
+  }
+
+  @override
   Future<void> setFavorite(String id, {required bool isFavorite}) async {
     // Favoriting is not an edit, so updatedAt is left unchanged.
     await (_db.update(_db.documents)..where((d) => d.id.equals(id))).write(
