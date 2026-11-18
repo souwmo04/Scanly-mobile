@@ -102,6 +102,26 @@ original ─▶ decode (EXIF applied, ≤ 4096 px) ─▶ homography crop + quar
 * Page operations (append, retake, delete, reorder) run in one transaction and refresh
   the document's page count, cover, size and search-result page numbers.
 
+## PDF
+
+* **Builder** (`lib/core/services/pdf_builder.dart`): one PDF page per scanned page.
+  Fixed sizes use `PdfPageFormat` (A4, A5, Letter, Legal) with an 18 pt margin;
+  `original` sizes the page to the image at 150 dpi. `auto` orientation turns a page to
+  landscape when its image is wider than tall. Each image is decoded by the platform codec
+  straight to the pixel size needed for ~200 dpi in its box on the page, then JPEG-encoded in
+  an isolate at the chosen compression. Pages are processed one at a time.
+* **Service** (`lib/data/services/pdf_document_service.dart`): `ensurePdf` writes
+  `document.pdf` atomically next to a `document.pdf.meta` sidecar holding the options and a
+  fingerprint of every page (id, path, size, modification time). The cached PDF is reused
+  only while that fingerprint matches. Merge and split copy page files (original,
+  processed, thumbnail) into new documents and carry over each page's edit settings.
+* **Viewer**: pages are rasterized one at a time with `Printing.raster`, which uses the
+  operating system's own PDF renderer. Only the visible page and its neighbours are kept.
+* **Why not pdfrx?** `pdfrx` 3 renders with PDFium through a native-assets hook that
+  compiles a C shim on the host machine, so every `flutter test` would need a C compiler
+  (Visual Studio on Windows). The platform renderers already on every phone are enough for
+  viewing scanned pages, and they keep the app smaller.
+
 ## Storage
 
 ```
