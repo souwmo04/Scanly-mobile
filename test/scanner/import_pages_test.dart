@@ -35,6 +35,19 @@ void main() {
     );
   });
 
+  /// Imports plain paths (no auto-crop) through the use case.
+  Future<String> importAll(
+    List<String> paths, {
+    required String title,
+    bool deleteSources = false,
+    ImportProgress? onProgress,
+  }) => importPages(
+    [for (final path in paths) PageSource(path)],
+    title: title,
+    deleteSources: deleteSources,
+    onProgress: onProgress,
+  );
+
   tearDown(() async {
     await db.close();
     if (sandbox.existsSync()) await sandbox.delete(recursive: true);
@@ -114,7 +127,7 @@ void main() {
       ];
       final progress = <(int, int)>[];
 
-      final id = await importPages(
+      final id = await importAll(
         sources,
         title: 'Lease agreement',
         onProgress: (done, total) => progress.add((done, total)),
@@ -148,7 +161,7 @@ void main() {
 
     test('originals are byte-identical copies', () async {
       final source = makeJpeg('orig.jpg');
-      final id = await importPages([source], title: 'Copy');
+      final id = await importAll([source], title: 'Copy');
       final page = (await documents.getPages(id)).single;
       expect(
         File(page.originalPath).readAsBytesSync(),
@@ -158,7 +171,7 @@ void main() {
 
     test('deleteSources removes temporary captures', () async {
       final source = makeJpeg('temp.jpg');
-      await importPages([source], title: 'Temp', deleteSources: true);
+      await importAll([source], title: 'Temp', deleteSources: true);
       expect(File(source).existsSync(), isFalse);
     });
 
@@ -168,7 +181,7 @@ void main() {
       File(bad).writeAsStringSync('corrupt');
 
       await expectLater(
-        importPages([good, bad], title: 'Broken'),
+        importAll([good, bad], title: 'Broken'),
         throwsA(isA<StorageException>()),
       );
 
@@ -179,11 +192,11 @@ void main() {
 
     test('rejects empty input and missing files', () async {
       await expectLater(
-        importPages([], title: 'Empty'),
+        importAll([], title: 'Empty'),
         throwsA(isA<ValidationException>()),
       );
       await expectLater(
-        importPages([p.join(sandbox.path, 'nope.jpg')], title: 'Missing'),
+        importAll([p.join(sandbox.path, 'nope.jpg')], title: 'Missing'),
         throwsA(isA<StorageException>()),
       );
     });
@@ -192,10 +205,79 @@ void main() {
       final path = p.join(sandbox.path, 'shot.PNG');
       File(path)
           .writeAsBytesSync(img.encodePng(img.Image(width: 50, height: 80)));
-      final id = await importPages([path], title: 'Screenshot');
+      final id = await importAll([path], title: 'Screenshot');
       final page = (await documents.getPages(id)).single;
       expect(page.originalPath, endsWith('.png'));
       expect((page.width, page.height), (50, 80));
+    });
+  });
+
+  group('auto-crop', () {
+    /// Dark desk with a tilted light page, like a real capture.
+    String makeCapture(String name) {
+      final photo = img.Image(width: 1200, height: 900)
+        ..clear(img.ColorRgb8(45, 50, 55));
+      img.fillPolygon(
+        photo,
+        vertices: [
+          img.Point(300, 120),
+          img.Point(900, 160),
+          img.Point(860, 820),
+          img.Point(260, 780),
+        ],
+        color: img.ColorRgb8(240, 238, 230),
+      );
+      final path = p.join(sandbox.path, name);
+      File(path).writeAsBytesSync(img.encodeJpg(photo, quality: 90));
+      return path;
+    }
+
+    test('flattens a detected page and stores its corners', () async {
+      final source = makeCapture('capture.jpg');
+
+      final id = await importPages([
+        PageSource(source, autoCrop: true),
+      ], title: 'Auto');
+
+      final page = (await documents.getPages(id)).single;
+      expect(page.processedPath, isNotNull);
+      expect(File(page.processedPath!).existsSync(), isTrue);
+      expect(page.displayPath, page.processedPath);
+      // The original is still the untouched capture.
+      expect(
+        File(page.originalPath).readAsBytesSync(),
+        File(source).readAsBytesSync(),
+      );
+      // Corners survive the database round trip.
+      expect(page.cropCorners, isNotNull);
+      expect(page.cropCorners!.topLeft.x, closeTo(0.25, 0.03));
+      // Size describes the flattened page (portrait, ~600 × 660).
+      expect(page.height, greaterThan(page.width));
+    });
+
+    test('keeps the uncropped photo when no page is found', () async {
+      final blank = img.Image(width: 800, height: 600)
+        ..clear(img.ColorRgb8(130, 130, 130));
+      final path = p.join(sandbox.path, 'blank.jpg');
+      File(path).writeAsBytesSync(img.encodeJpg(blank));
+
+      final id = await importPages([
+        PageSource(path, autoCrop: true),
+      ], title: 'Nothing');
+
+      final page = (await documents.getPages(id)).single;
+      expect(page.processedPath, isNull);
+      expect(page.cropCorners, isNull);
+      expect((page.width, page.height), (800, 600));
+    });
+
+    test('does not crop when autoCrop is off', () async {
+      final id = await importPages([
+        PageSource(makeCapture('scanner.jpg')),
+      ], title: 'From ML Kit');
+      final page = (await documents.getPages(id)).single;
+      expect(page.processedPath, isNull);
+      expect((page.width, page.height), (1200, 900));
     });
   });
 }

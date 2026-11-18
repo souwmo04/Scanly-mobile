@@ -54,17 +54,22 @@ class FakeImport implements ImportPagesUseCase {
   final bool fail;
   final List<List<String>> calls = [];
 
+  /// Auto-crop flag of every imported page, per call.
+  final List<List<bool>> autoCrop = [];
+
   @override
   Future<String> call(
-    List<String> sourcePaths, {
+    List<PageSource> sources, {
     required String title,
     String? folderId,
     bool deleteSources = false,
+    int jpegQuality = 88,
     ImportProgress? onProgress,
   }) async {
-    calls.add(sourcePaths);
+    calls.add([for (final s in sources) s.path]);
+    autoCrop.add([for (final s in sources) s.autoCrop]);
     if (fail) throw const StorageException('Disk full.');
-    onProgress?.call(sourcePaths.length, sourcePaths.length);
+    onProgress?.call(sources.length, sources.length);
     final id = 'doc${calls.length}';
     await db
         .into(db.documents)
@@ -72,7 +77,7 @@ class FakeImport implements ImportPagesUseCase {
           DocumentsCompanion.insert(
             id: id,
             title: title,
-            pageCount: Value(sourcePaths.length),
+            pageCount: Value(sources.length),
             createdAt: DateTime(2026),
             updatedAt: DateTime(2026),
           ),
@@ -153,6 +158,8 @@ void main() {
 
     expect(scanner.calls, 1);
     expect(importer.calls.single, ['/a.jpg', '/b.jpg']);
+    // Google's scanner already cropped these pages.
+    expect(importer.autoCrop.single, [false, false]);
     // Document screen replaced the scanner.
     expect(find.textContaining('Scan '), findsWidgets);
     expect(find.textContaining('2 pages'), findsOneWidget);
@@ -257,6 +264,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(importer.calls.single, ['/g1.jpg', '/g2.jpg']);
+    expect(importer.autoCrop.single, [true, true]);
     expect(find.textContaining('2 pages'), findsOneWidget);
   });
 
@@ -290,6 +298,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(importer.calls.single, hasLength(3));
+    expect(importer.autoCrop.single, everyElement(isTrue));
     expect(find.textContaining('3 pages'), findsOneWidget);
   });
 
