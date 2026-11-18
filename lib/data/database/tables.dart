@@ -82,6 +82,14 @@ class PageOcr extends Table {
   TextColumn get status => text().withDefault(const Constant('pending'))();
   DateTimeColumn get updatedAt => dateTime()();
 
+  /// Recognised lines as JSON `[{"t": text, "b": [l, t, r, b]?}]` with boxes
+  /// normalised 0–1 to the processed page (schema version 4). Boxes are
+  /// absent when the engine does not report positions.
+  TextColumn get lines => text().nullable()();
+
+  /// Last error message when [status] is failed (schema version 4).
+  TextColumn get errorMessage => text().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }

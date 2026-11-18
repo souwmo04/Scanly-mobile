@@ -1932,6 +1932,26 @@ class $PageOcrTable extends PageOcr with TableInfo<$PageOcrTable, PageOcrRow> {
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _linesMeta = const VerificationMeta('lines');
+  @override
+  late final GeneratedColumn<String> lines = GeneratedColumn<String>(
+    'lines',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _errorMessageMeta = const VerificationMeta(
+    'errorMessage',
+  );
+  @override
+  late final GeneratedColumn<String> errorMessage = GeneratedColumn<String>(
+    'error_message',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1941,6 +1961,8 @@ class $PageOcrTable extends PageOcr with TableInfo<$PageOcrTable, PageOcrRow> {
     engine,
     status,
     updatedAt,
+    lines,
+    errorMessage,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2007,6 +2029,21 @@ class $PageOcrTable extends PageOcr with TableInfo<$PageOcrTable, PageOcrRow> {
     } else if (isInserting) {
       context.missing(_updatedAtMeta);
     }
+    if (data.containsKey('lines')) {
+      context.handle(
+        _linesMeta,
+        lines.isAcceptableOrUnknown(data['lines']!, _linesMeta),
+      );
+    }
+    if (data.containsKey('error_message')) {
+      context.handle(
+        _errorMessageMeta,
+        errorMessage.isAcceptableOrUnknown(
+          data['error_message']!,
+          _errorMessageMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -2044,6 +2081,14 @@ class $PageOcrTable extends PageOcr with TableInfo<$PageOcrTable, PageOcrRow> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}updated_at'],
       )!,
+      lines: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}lines'],
+      ),
+      errorMessage: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}error_message'],
+      ),
     );
   }
 
@@ -2063,6 +2108,14 @@ class PageOcrRow extends DataClass implements Insertable<PageOcrRow> {
   /// One of: pending, processing, done, failed.
   final String status;
   final DateTime updatedAt;
+
+  /// Recognised lines as JSON `[{"t": text, "b": [l, t, r, b]?}]` with boxes
+  /// normalised 0–1 to the processed page (schema version 4). Boxes are
+  /// absent when the engine does not report positions.
+  final String? lines;
+
+  /// Last error message when [status] is failed (schema version 4).
+  final String? errorMessage;
   const PageOcrRow({
     required this.id,
     required this.pageId,
@@ -2071,6 +2124,8 @@ class PageOcrRow extends DataClass implements Insertable<PageOcrRow> {
     required this.engine,
     required this.status,
     required this.updatedAt,
+    this.lines,
+    this.errorMessage,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2084,6 +2139,12 @@ class PageOcrRow extends DataClass implements Insertable<PageOcrRow> {
     map['engine'] = Variable<String>(engine);
     map['status'] = Variable<String>(status);
     map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || lines != null) {
+      map['lines'] = Variable<String>(lines);
+    }
+    if (!nullToAbsent || errorMessage != null) {
+      map['error_message'] = Variable<String>(errorMessage);
+    }
     return map;
   }
 
@@ -2098,6 +2159,12 @@ class PageOcrRow extends DataClass implements Insertable<PageOcrRow> {
       engine: Value(engine),
       status: Value(status),
       updatedAt: Value(updatedAt),
+      lines: lines == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lines),
+      errorMessage: errorMessage == null && nullToAbsent
+          ? const Value.absent()
+          : Value(errorMessage),
     );
   }
 
@@ -2114,6 +2181,8 @@ class PageOcrRow extends DataClass implements Insertable<PageOcrRow> {
       engine: serializer.fromJson<String>(json['engine']),
       status: serializer.fromJson<String>(json['status']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      lines: serializer.fromJson<String?>(json['lines']),
+      errorMessage: serializer.fromJson<String?>(json['errorMessage']),
     );
   }
   @override
@@ -2127,6 +2196,8 @@ class PageOcrRow extends DataClass implements Insertable<PageOcrRow> {
       'engine': serializer.toJson<String>(engine),
       'status': serializer.toJson<String>(status),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'lines': serializer.toJson<String?>(lines),
+      'errorMessage': serializer.toJson<String?>(errorMessage),
     };
   }
 
@@ -2138,6 +2209,8 @@ class PageOcrRow extends DataClass implements Insertable<PageOcrRow> {
     String? engine,
     String? status,
     DateTime? updatedAt,
+    Value<String?> lines = const Value.absent(),
+    Value<String?> errorMessage = const Value.absent(),
   }) => PageOcrRow(
     id: id ?? this.id,
     pageId: pageId ?? this.pageId,
@@ -2148,6 +2221,8 @@ class PageOcrRow extends DataClass implements Insertable<PageOcrRow> {
     engine: engine ?? this.engine,
     status: status ?? this.status,
     updatedAt: updatedAt ?? this.updatedAt,
+    lines: lines.present ? lines.value : this.lines,
+    errorMessage: errorMessage.present ? errorMessage.value : this.errorMessage,
   );
   PageOcrRow copyWithCompanion(PageOcrCompanion data) {
     return PageOcrRow(
@@ -2162,6 +2237,10 @@ class PageOcrRow extends DataClass implements Insertable<PageOcrRow> {
       engine: data.engine.present ? data.engine.value : this.engine,
       status: data.status.present ? data.status.value : this.status,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      lines: data.lines.present ? data.lines.value : this.lines,
+      errorMessage: data.errorMessage.present
+          ? data.errorMessage.value
+          : this.errorMessage,
     );
   }
 
@@ -2174,7 +2253,9 @@ class PageOcrRow extends DataClass implements Insertable<PageOcrRow> {
           ..write('detectedLanguage: $detectedLanguage, ')
           ..write('engine: $engine, ')
           ..write('status: $status, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('lines: $lines, ')
+          ..write('errorMessage: $errorMessage')
           ..write(')'))
         .toString();
   }
@@ -2188,6 +2269,8 @@ class PageOcrRow extends DataClass implements Insertable<PageOcrRow> {
     engine,
     status,
     updatedAt,
+    lines,
+    errorMessage,
   );
   @override
   bool operator ==(Object other) =>
@@ -2199,7 +2282,9 @@ class PageOcrRow extends DataClass implements Insertable<PageOcrRow> {
           other.detectedLanguage == this.detectedLanguage &&
           other.engine == this.engine &&
           other.status == this.status &&
-          other.updatedAt == this.updatedAt);
+          other.updatedAt == this.updatedAt &&
+          other.lines == this.lines &&
+          other.errorMessage == this.errorMessage);
 }
 
 class PageOcrCompanion extends UpdateCompanion<PageOcrRow> {
@@ -2210,6 +2295,8 @@ class PageOcrCompanion extends UpdateCompanion<PageOcrRow> {
   final Value<String> engine;
   final Value<String> status;
   final Value<DateTime> updatedAt;
+  final Value<String?> lines;
+  final Value<String?> errorMessage;
   final Value<int> rowid;
   const PageOcrCompanion({
     this.id = const Value.absent(),
@@ -2219,6 +2306,8 @@ class PageOcrCompanion extends UpdateCompanion<PageOcrRow> {
     this.engine = const Value.absent(),
     this.status = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.lines = const Value.absent(),
+    this.errorMessage = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   PageOcrCompanion.insert({
@@ -2229,6 +2318,8 @@ class PageOcrCompanion extends UpdateCompanion<PageOcrRow> {
     required String engine,
     this.status = const Value.absent(),
     required DateTime updatedAt,
+    this.lines = const Value.absent(),
+    this.errorMessage = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        pageId = Value(pageId),
@@ -2242,6 +2333,8 @@ class PageOcrCompanion extends UpdateCompanion<PageOcrRow> {
     Expression<String>? engine,
     Expression<String>? status,
     Expression<DateTime>? updatedAt,
+    Expression<String>? lines,
+    Expression<String>? errorMessage,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -2252,6 +2345,8 @@ class PageOcrCompanion extends UpdateCompanion<PageOcrRow> {
       if (engine != null) 'engine': engine,
       if (status != null) 'status': status,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (lines != null) 'lines': lines,
+      if (errorMessage != null) 'error_message': errorMessage,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2264,6 +2359,8 @@ class PageOcrCompanion extends UpdateCompanion<PageOcrRow> {
     Value<String>? engine,
     Value<String>? status,
     Value<DateTime>? updatedAt,
+    Value<String?>? lines,
+    Value<String?>? errorMessage,
     Value<int>? rowid,
   }) {
     return PageOcrCompanion(
@@ -2274,6 +2371,8 @@ class PageOcrCompanion extends UpdateCompanion<PageOcrRow> {
       engine: engine ?? this.engine,
       status: status ?? this.status,
       updatedAt: updatedAt ?? this.updatedAt,
+      lines: lines ?? this.lines,
+      errorMessage: errorMessage ?? this.errorMessage,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2302,6 +2401,12 @@ class PageOcrCompanion extends UpdateCompanion<PageOcrRow> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
+    if (lines.present) {
+      map['lines'] = Variable<String>(lines.value);
+    }
+    if (errorMessage.present) {
+      map['error_message'] = Variable<String>(errorMessage.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2318,6 +2423,8 @@ class PageOcrCompanion extends UpdateCompanion<PageOcrRow> {
           ..write('engine: $engine, ')
           ..write('status: $status, ')
           ..write('updatedAt: $updatedAt, ')
+          ..write('lines: $lines, ')
+          ..write('errorMessage: $errorMessage, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3795,6 +3902,8 @@ typedef $$PageOcrTableCreateCompanionBuilder = PageOcrCompanion Function({
   required String engine,
   Value<String> status,
   required DateTime updatedAt,
+  Value<String?> lines,
+  Value<String?> errorMessage,
   Value<int> rowid,
 });
 typedef $$PageOcrTableUpdateCompanionBuilder = PageOcrCompanion Function({
@@ -3805,6 +3914,8 @@ typedef $$PageOcrTableUpdateCompanionBuilder = PageOcrCompanion Function({
   Value<String> engine,
   Value<String> status,
   Value<DateTime> updatedAt,
+  Value<String?> lines,
+  Value<String?> errorMessage,
   Value<int> rowid,
 });
 
@@ -3866,6 +3977,16 @@ class $$PageOcrTableFilterComposer
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get lines => $composableBuilder(
+    column: $table.lines,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get errorMessage => $composableBuilder(
+    column: $table.errorMessage,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3932,6 +4053,16 @@ class $$PageOcrTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get lines => $composableBuilder(
+    column: $table.lines,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get errorMessage => $composableBuilder(
+    column: $table.errorMessage,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$PagesTableOrderingComposer get pageId {
     final $$PagesTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -3986,6 +4117,14 @@ class $$PageOcrTableAnnotationComposer
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get lines =>
+      $composableBuilder(column: $table.lines, builder: (column) => column);
+
+  GeneratedColumn<String> get errorMessage => $composableBuilder(
+    column: $table.errorMessage,
+    builder: (column) => column,
+  );
 
   $$PagesTableAnnotationComposer get pageId {
     final $$PagesTableAnnotationComposer composer = $composerBuilder(
@@ -4046,6 +4185,8 @@ class $$PageOcrTableTableManager
                 Value<String> engine = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
+                Value<String?> lines = const Value.absent(),
+                Value<String?> errorMessage = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PageOcrCompanion(
                 id: id,
@@ -4055,6 +4196,8 @@ class $$PageOcrTableTableManager
                 engine: engine,
                 status: status,
                 updatedAt: updatedAt,
+                lines: lines,
+                errorMessage: errorMessage,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -4066,6 +4209,8 @@ class $$PageOcrTableTableManager
                 required String engine,
                 Value<String> status = const Value.absent(),
                 required DateTime updatedAt,
+                Value<String?> lines = const Value.absent(),
+                Value<String?> errorMessage = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PageOcrCompanion.insert(
                 id: id,
@@ -4075,6 +4220,8 @@ class $$PageOcrTableTableManager
                 engine: engine,
                 status: status,
                 updatedAt: updatedAt,
+                lines: lines,
+                errorMessage: errorMessage,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

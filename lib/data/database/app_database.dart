@@ -30,7 +30,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forExecutor(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   /// Full-text index over document titles and page OCR text.
   ///
@@ -64,6 +64,10 @@ CREATE VIRTUAL TABLE IF NOT EXISTS search_index USING fts5(
         await m.addColumn(schema.pages, schema.pages.brightness);
         await m.addColumn(schema.pages, schema.pages.contrast);
         await m.addColumn(schema.pages, schema.pages.sharpness);
+      },
+      from3To4: (m, schema) async {
+        await m.addColumn(schema.pageOcr, schema.pageOcr.lines);
+        await m.addColumn(schema.pageOcr, schema.pageOcr.errorMessage);
       },
     ),
     beforeOpen: (details) async {
