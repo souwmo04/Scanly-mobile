@@ -59,16 +59,21 @@ Legend: `[x]` done · `[ ]` to do · `[~]` in progress · `[!]` needs macOS / a 
 - [x] Debug and release APKs build
 - [!] On the emulator, Play services couldn't install Google's scanner module ("Something went wrong"). Scanly handled the cancel correctly. Test a full ML Kit scan and the built-in camera on a physical Android phone
 
-## Milestone 3: iOS scanner (shared OpenCV pipeline)
+## Milestone 3: Edge detection and auto-capture (iOS + Android built-in camera) ✅
 
-- [ ] Camera preview using `camera`
-- [ ] OpenCV pipeline: downscale, grayscale, blur, Canny, contours, quad
-- [ ] Quad validation: convexity, angles, area ratio, aspect ratio
-- [ ] Temporal stability check and auto-capture
-- [ ] Manual capture, flash, camera switch, page counter
-- [ ] Perspective warp at full resolution in an isolate
-- [ ] Unit tests on synthetic images (tilted document, white on white)
-- [!] Test on a physical iPhone (needs macOS and Xcode)
+- [x] Camera preview using `camera` (done in M2), streaming YUV420 (Android) / BGRA (iOS)
+- [x] Vision pipeline in pure Dart: downscale, grayscale, Gaussian blur, adaptive Canny, dilation, contours, convex hull, quad. **Deviation:** `opencv_dart` was evaluated and dropped because it needs a native C++ toolchain on every build machine and adds 20–40 MB per ABI. The reasons are in docs/ARCHITECTURE.md
+- [x] Quad validation: convexity, corner angles, area ratio, aspect ratio, side length, edge-support confidence
+- [x] Temporal stability (6 steady frames, < 2 % movement) and auto-capture with a 1.5 s cooldown; Auto/Manual toggle
+- [x] Live outline overlay that fills in as the document steadies; hints ("Looking for a document…", "Hold steady…")
+- [x] Manual capture, flash, camera switch, page counter (M2)
+- [x] Full-resolution perspective correction on the GPU (Flutter renderer + homography); JPEG encoding in an isolate
+- [x] Auto-crop for camera captures and gallery photos; the uncropped original is kept when no page is found
+- [x] Crop corners stored per page (schema v2) with a verified Drift migration
+- [x] Tests: vision (23), cropper incl. EXIF (6), live frames (4), auto-crop import (3), migration (2). 102 total passing
+- [x] Release APK builds (60.5 MB, only +0.3 MB); permissions still CAMERA only
+- [!] Test live detection and auto-capture on a physical Android phone (the emulator was in use by another app)
+- [!] Test on a physical iPhone (needs macOS and Xcode); confirm stream orientation matches `sensorOrientation`
 
 ## Milestone 4: Editor
 
