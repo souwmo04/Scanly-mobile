@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
 import 'core/services/storage_service.dart';
+import 'features/ocr/ocr_queue.dart';
 import 'shared/providers/core_providers.dart';
 
 Future<void> main() async {
@@ -42,6 +43,13 @@ Future<void> main() async {
   runApp(
     UncontrolledProviderScope(container: container, child: const ScanlyApp()),
   );
+
+  // Continue text recognition that was interrupted when the app closed,
+  // once the first frame is on screen. Pages run one at a time in the
+  // background; failures are recorded per page.
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    unawaited(container.read(ocrQueueProvider.notifier).resumeUnfinished());
+  });
 }
 
 /// Adds licences of bundled data (OCR models, font) to the licence page.
