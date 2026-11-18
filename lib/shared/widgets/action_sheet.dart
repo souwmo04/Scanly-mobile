@@ -19,6 +19,9 @@ class SheetAction<T> {
 
 /// Bottom sheet with a list of actions. Resolves to the chosen value, or
 /// `null` if dismissed.
+///
+/// The sheet sizes itself to its content and scrolls when that is taller
+/// than the screen allows (many entries, short phones or large text sizes).
 Future<T?> showActionSheet<T>(
   BuildContext context, {
   required List<SheetAction<T>> actions,
@@ -27,12 +30,13 @@ Future<T?> showActionSheet<T>(
   return showModalBottomSheet<T>(
     context: context,
     useSafeArea: true,
+    isScrollControlled: true,
     builder: (context) {
       final theme = Theme.of(context);
       final scheme = theme.colorScheme;
       return SafeArea(
         top: false,
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.only(bottom: AppSpacing.md),
           child: Column(
             mainAxisSize: MainAxisSize.min,
