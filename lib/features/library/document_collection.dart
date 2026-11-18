@@ -8,6 +8,7 @@ import '../../domain/entities/scan_document.dart';
 import '../../domain/repositories/document_repository.dart';
 import '../../shared/providers/core_providers.dart';
 import '../../shared/widgets/document_card.dart';
+import '../pdf_viewer/pdf_actions.dart';
 import 'document_actions.dart';
 import 'library_controller.dart';
 
@@ -161,6 +162,16 @@ class SelectionAppBar extends ConsumerWidget implements PreferredSizeWidget {
             selection.clear();
           },
         ),
+        if (ids.length >= 2)
+          IconButton(
+            tooltip: 'Merge',
+            icon: const Icon(Icons.merge_rounded),
+            // Merged in the order the documents are shown on screen.
+            onPressed: () => mergeDocumentsFlow(context, ref, [
+              for (final id in allIds)
+                if (selection.contains(id)) id,
+            ], onMerged: selection.clear),
+          ),
         IconButton(
           tooltip: 'Move to folder',
           icon: const Icon(Icons.drive_file_move_outline),
