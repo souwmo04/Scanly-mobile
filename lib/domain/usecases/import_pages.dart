@@ -60,16 +60,7 @@ class ImportPagesUseCase {
     int jpegQuality = 88,
     ImportProgress? onProgress,
   }) async {
-    if (sources.isEmpty) {
-      throw const ValidationException('There are no pages to save.');
-    }
-    for (final source in sources) {
-      if (!File(source.path).existsSync()) {
-        throw const StorageException(
-          'A captured page could not be found. Please scan again.',
-        );
-      }
-    }
+    _checkSources(sources);
 
     final documentId = _storage.newId();
     final pages = <NewPage>[];
@@ -94,17 +85,106 @@ class ImportPagesUseCase {
       rethrow;
     }
 
-    if (deleteSources) {
+    if (deleteSources) _deleteSources(sources);
+    return documentId;
+  }
+
+  /// Adds [sources] to the end of an existing document.
+  Future<void> appendTo(
+    String documentId,
+    List<PageSource> sources, {
+    bool deleteSources = false,
+    int jpegQuality = 88,
+    ImportProgress? onProgress,
+  }) async {
+    _checkSources(sources);
+    final pages = <NewPage>[];
+    onProgress?.call(0, sources.length);
+    try {
       for (final source in sources) {
-        try {
-          final file = File(source.path);
-          if (file.existsSync()) file.deleteSync();
-        } on FileSystemException {
-          // Temporary capture already gone; nothing to do.
-        }
+        pages.add(
+          await _importPage(documentId, source, jpegQuality: jpegQuality),
+        );
+        onProgress?.call(pages.length, sources.length);
+      }
+      await _documents.addPages(documentId, pages);
+    } on Object {
+      // Remove only the files written by this import.
+      await _deletePageFiles(pages);
+      rethrow;
+    }
+    if (deleteSources) _deleteSources(sources);
+  }
+
+  /// Replaces the image of [pageId] with a new capture (retake).
+  Future<void> replacePage(
+    String pageId,
+    PageSource source, {
+    bool deleteSource = false,
+    int jpegQuality = 88,
+  }) async {
+    _checkSources([source]);
+    final existing = await _documents.getPage(pageId);
+    if (existing == null) {
+      throw const NotFoundException('Page not found.');
+    }
+    final page = await _importPage(
+      existing.documentId,
+      source,
+      jpegQuality: jpegQuality,
+    );
+    final ScanPageFiles old;
+    try {
+      final replaced = await _documents.replacePage(pageId, page);
+      old = ScanPageFiles(
+        replaced.originalPath,
+        replaced.processedPath,
+        replaced.thumbnailPath,
+      );
+    } on Object {
+      await _deletePageFiles([page]);
+      rethrow;
+    }
+    for (final path in old.all) {
+      await _storage.deleteFile(path);
+    }
+    if (deleteSource) _deleteSources([source]);
+  }
+
+  void _checkSources(List<PageSource> sources) {
+    if (sources.isEmpty) {
+      throw const ValidationException('There are no pages to save.');
+    }
+    for (final source in sources) {
+      if (!File(source.path).existsSync()) {
+        throw const StorageException(
+          'A captured page could not be found. Please scan again.',
+        );
       }
     }
-    return documentId;
+  }
+
+  Future<void> _deletePageFiles(List<NewPage> pages) async {
+    for (final page in pages) {
+      for (final path in [
+        page.originalPath,
+        page.processedPath,
+        page.thumbnailPath,
+      ]) {
+        if (path != null) await _storage.deleteFile(path);
+      }
+    }
+  }
+
+  void _deleteSources(List<PageSource> sources) {
+    for (final source in sources) {
+      try {
+        final file = File(source.path);
+        if (file.existsSync()) file.deleteSync();
+      } on FileSystemException {
+        // Temporary capture already gone; nothing to do.
+      }
+    }
   }
 
   Future<NewPage> _importPage(
@@ -119,40 +199,49 @@ class ImportPagesUseCase {
       DocumentFileKind.original,
       extension: _extensionOf(source.path),
     );
-    await _storage.importFile(File(source.path), originalPath);
-
-    String? processedPath;
-    Quad? corners;
-    if (source.autoCrop) {
-      corners = await _cropper.detect(originalPath);
-      if (corners != null) {
-        processedPath = _storage.pagePath(
-          documentId,
-          pageId,
-          DocumentFileKind.processed,
-        );
-        await _storage.writeBytes(
-          processedPath,
-          await _cropper.flatten(
-            originalPath,
-            corners,
-            jpegQuality: jpegQuality,
-          ),
-        );
-      }
-    }
-
-    final displayPath = processedPath ?? originalPath;
-    final size = await _images.readSize(displayPath);
+    final processedFile = _storage.pagePath(
+      documentId,
+      pageId,
+      DocumentFileKind.processed,
+    );
     final thumbnailPath = _storage.pagePath(
       documentId,
       pageId,
       DocumentFileKind.thumbnail,
     );
-    await _storage.writeBytes(
-      thumbnailPath,
-      await _images.createThumbnail(displayPath),
-    );
+
+    String? processedPath;
+    Quad? corners;
+    final ImageSize size;
+    try {
+      await _storage.importFile(File(source.path), originalPath);
+      if (source.autoCrop) {
+        corners = await _cropper.detect(originalPath);
+        if (corners != null) {
+          processedPath = processedFile;
+          await _storage.writeBytes(
+            processedFile,
+            await _cropper.flatten(
+              originalPath,
+              corners,
+              jpegQuality: jpegQuality,
+            ),
+          );
+        }
+      }
+      final displayPath = processedPath ?? originalPath;
+      size = await _images.readSize(displayPath);
+      await _storage.writeBytes(
+        thumbnailPath,
+        await _images.createThumbnail(displayPath),
+      );
+    } on Object {
+      // Don't leave half-imported files behind.
+      for (final path in [originalPath, processedFile, thumbnailPath]) {
+        await _storage.deleteFile(path);
+      }
+      rethrow;
+    }
 
     return NewPage(
       id: pageId,
@@ -174,4 +263,15 @@ class ImportPagesUseCase {
     if (ext == '.jpeg') return '.jpg';
     return _knownExtensions.contains(ext) ? ext : '.jpg';
   }
+}
+
+/// Image files that belong to one page.
+class ScanPageFiles {
+  const ScanPageFiles(this.original, this.processed, this.thumbnail);
+
+  final String original;
+  final String? processed;
+  final String? thumbnail;
+
+  List<String> get all => [original, ?processed, ?thumbnail];
 }
