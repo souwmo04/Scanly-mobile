@@ -180,9 +180,7 @@ abstract final class AppTheme {
         ),
       ),
       listTileTheme: ListTileThemeData(
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         minVerticalPadding: AppSpacing.md,
         iconColor: scheme.onSurfaceVariant,
         titleTextStyle: textTheme.bodyLarge,

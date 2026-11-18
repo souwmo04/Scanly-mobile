@@ -23,11 +23,8 @@ class Folders extends Table {
 @TableIndex(name: 'idx_documents_favorite', columns: {#isFavorite})
 class Documents extends Table {
   TextColumn get id => text()();
-  TextColumn get folderId => text().nullable().references(
-    Folders,
-    #id,
-    onDelete: KeyAction.setNull,
-  )();
+  TextColumn get folderId =>
+      text().nullable().references(Folders, #id, onDelete: KeyAction.setNull)();
   TextColumn get title => text().withLength(min: 1, max: 200)();
   IntColumn get pageCount => integer().withDefault(const Constant(0))();
   TextColumn get pdfPath => text().nullable()();
