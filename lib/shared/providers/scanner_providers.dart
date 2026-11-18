@@ -1,3 +1,4 @@
+import 'package:camera/camera.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/services/image_service.dart';
@@ -30,3 +31,10 @@ final importPagesProvider = Provider<ImportPagesUseCase>(
 
 /// ML Kit's limit per session; Scanly itself imposes no page limit.
 const maxPagesPerScan = 100;
+
+/// Lists the device cameras. Injected so tests can simulate devices with or
+/// without cameras.
+final availableCamerasProvider =
+    Provider<Future<List<CameraDescription>> Function()>(
+      (ref) => availableCameras,
+    );
