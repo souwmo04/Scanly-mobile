@@ -23,6 +23,11 @@ class NotFoundException extends AppException {
   const NotFoundException(super.message, [super.cause]);
 }
 
+/// Text recognition could not run or failed on this device.
+class OcrException extends AppException {
+  const OcrException(super.message, [super.cause]);
+}
+
 class ValidationException extends AppException {
   const ValidationException(super.message, [super.cause]);
 }
