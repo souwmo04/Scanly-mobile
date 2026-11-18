@@ -22,7 +22,7 @@ Future<void> showDocumentActions(
   WidgetRef ref,
   ScanDocument document,
 ) async {
-  final action = await _showScrollableActionSheet<_DocumentAction>(
+  final action = await showActionSheet<_DocumentAction>(
     context,
     title: document.title,
     actions: [
@@ -202,68 +202,6 @@ Future<bool> moveDocuments(
     );
   }
   return ok;
-}
-
-/// Like [showActionSheet], but scrolls when the menu is taller than the
-/// screen allows (the document menu has many entries, and short phones or
-/// large text sizes would otherwise overflow).
-Future<T?> _showScrollableActionSheet<T>(
-  BuildContext context, {
-  required List<SheetAction<T>> actions,
-  required String title,
-}) {
-  return showModalBottomSheet<T>(
-    context: context,
-    useSafeArea: true,
-    isScrollControlled: true,
-    builder: (context) {
-      final theme = Theme.of(context);
-      final scheme = theme.colorScheme;
-      return SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.only(bottom: AppSpacing.md),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.xxl,
-                  0,
-                  AppSpacing.xxl,
-                  AppSpacing.md,
-                ),
-                child: Text(
-                  title,
-                  style: theme.textTheme.titleMedium,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              for (final action in actions)
-                ListTile(
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xxl,
-                  ),
-                  leading: Icon(
-                    action.icon,
-                    color: action.destructive ? scheme.error : null,
-                  ),
-                  title: Text(
-                    action.label,
-                    style: action.destructive
-                        ? TextStyle(color: scheme.error)
-                        : null,
-                  ),
-                  onTap: () => Navigator.of(context).pop(action.value),
-                ),
-            ],
-          ),
-        ),
-      );
-    },
-  );
 }
 
 /// Runs [action] and reports failures as a snackbar. Returns success.
