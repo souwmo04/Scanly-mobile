@@ -6,6 +6,20 @@ All notable changes to Scanly are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-18 (Milestone 4: Editor)
+
+### Added
+- Page editor: four-corner crop with a magnifier, auto-detect, full page, rotation,
+  filters (original, grayscale, black & white, enhanced, color document), brightness,
+  contrast and sharpness, with undo/redo and a live preview.
+- Page organizer: drag to reorder, add pages by scanning, rotate, retake, edit and delete.
+- "Edit page" and "Pages" actions in the document viewer.
+- Edit settings are stored per page (database schema v3); originals are never changed.
+
+### Fixed
+- A page that failed to import could leave its copied image behind.
+- The adjustment sliders no longer overflow the tool panel.
+
 ## [0.3.0] - 2026-11-18 (Milestone 3: Edge detection and auto-capture)
 
 ### Added
