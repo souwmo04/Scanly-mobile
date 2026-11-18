@@ -214,7 +214,11 @@ class _ScanHeroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final onHero = scheme.onPrimary;
+    // Solid navy in light mode; a softer navy container in dark mode so the
+    // card does not glare against the dark background.
+    final isDark = theme.brightness == Brightness.dark;
+    final heroColor = isDark ? scheme.primaryContainer : scheme.primary;
+    final onHero = isDark ? scheme.onPrimaryContainer : scheme.onPrimary;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -224,7 +228,7 @@ class _ScanHeroCard extends StatelessWidget {
         0,
       ),
       child: Material(
-        color: scheme.primary,
+        color: heroColor,
         borderRadius: AppRadius.xlAll,
         clipBehavior: Clip.antiAlias,
         child: InkWell(
