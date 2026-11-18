@@ -1,7 +1,13 @@
 import '../entities/scan_document.dart';
 import '../entities/scan_page.dart';
 
-enum DocumentSort { updatedNewest, createdNewest, createdOldest, titleAZ, sizeLargest }
+enum DocumentSort {
+  updatedNewest,
+  createdNewest,
+  createdOldest,
+  titleAZ,
+  sizeLargest,
+}
 
 /// Input for one page when creating a document. Files must already exist
 /// inside the document's storage folder.
