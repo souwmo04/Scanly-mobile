@@ -68,6 +68,16 @@ flutter config --android-sdk tools/android-sdk --jdk-dir tools/jdk21
 flutter build apk --release
 ```
 
+That universal APK (~115 MB) contains the OCR native libraries for every CPU type. For
+smaller test installs, build one APK per CPU type and install the `arm64-v8a` one on
+modern phones:
+
+```bash
+flutter build apk --release --split-per-abi
+```
+
+The Play Store App Bundle below is split per device automatically.
+
 **Android App Bundle (Play Store)**: create `android/key.properties` (see
 [CONTRIBUTING.md](CONTRIBUTING.md#signing)), then run:
 
