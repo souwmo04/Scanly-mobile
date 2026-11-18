@@ -121,14 +121,20 @@ Legend: `[x]` done · `[ ]` to do · `[~]` in progress · `[!]` needs macOS / a 
 - [x] 278 tests passing; release APK builds (universal 115 MB; per-ABI or AAB is much smaller), CAMERA permission only
 - [!] Run the OCR benchmark and real Bangla/English scans on a physical Android phone and an iPhone
 
-## Milestone 7: Library
+## Milestone 7: Library ✅ (built with two parallel agents, reviewed and integrated)
 
-- [ ] Folders: create, rename, color, delete
-- [ ] Favorites
-- [ ] Grid/list view, sorting
-- [ ] Multi-select and bulk move/delete/share
-- [ ] Search results with title, page number, snippet; tap opens the right page
-- [ ] Test Bengali Unicode tokenization in FTS5
+- [x] Folders: create, rename, color, delete (M1); sort by name, recent activity or size (saved); "Add documents" picker with search
+- [x] Favorites, including a smart bulk toggle (removes when all selected are favorites)
+- [x] Grid/list view and document sorting (M1)
+- [x] Multi-select: favorite, move, merge, delete, and share several documents as PDFs in one share sheet (progress, cancel, partial-failure report)
+- [x] Duplicate a document, keeping page edits and recognized text
+- [x] Live document info sheet (folder, pages, size, dates, OCR status, stored on device)
+- [x] Search: results grouped by document with thumbnail, highlighted title and every matching page (Page n + snippet, "+N more"); tap a page to open it there
+- [x] Search filters (All / Documents / Text / Folders) applied in SQL with counts; recent searches (last 8, remove, clear); results capped at 50 with a note
+- [x] Bengali Unicode tokenization in FTS5 tested (M1, plus Bengali grouped-search tests)
+- [x] Fixed: folder card counts could overflow at large text sizes
+- [x] 332 tests passing; release APK builds, CAMERA permission only
+- [ ] Shared action sheet should scroll when it has many entries (the document sheet uses a local scrollable copy for now)
 
 ## Milestone 8: Release
 
