@@ -52,6 +52,11 @@ class Pages extends Table {
   IntColumn get height => integer()();
   IntColumn get rotation => integer().withDefault(const Constant(0))();
   TextColumn get filterType => text().withDefault(const Constant('original'))();
+
+  /// Crop outline as JSON `[x0, y0, … x3, y3]`, normalised 0–1 to the original
+  /// image (top-left, top-right, bottom-right, bottom-left). Null = no crop.
+  /// Added in schema version 2.
+  TextColumn get cropCorners => text().nullable()();
   DateTimeColumn get createdAt => dateTime()();
 
   @override

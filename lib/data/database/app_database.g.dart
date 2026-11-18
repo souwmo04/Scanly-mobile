@@ -1092,6 +1092,17 @@ class $PagesTable extends Pages with TableInfo<$PagesTable, PageRow> {
     requiredDuringInsert: false,
     defaultValue: const Constant('original'),
   );
+  static const VerificationMeta _cropCornersMeta = const VerificationMeta(
+    'cropCorners',
+  );
+  @override
+  late final GeneratedColumn<String> cropCorners = GeneratedColumn<String>(
+    'crop_corners',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -1115,6 +1126,7 @@ class $PagesTable extends Pages with TableInfo<$PagesTable, PageRow> {
     height,
     rotation,
     filterType,
+    cropCorners,
     createdAt,
   ];
   @override
@@ -1207,6 +1219,15 @@ class $PagesTable extends Pages with TableInfo<$PagesTable, PageRow> {
         filterType.isAcceptableOrUnknown(data['filter_type']!, _filterTypeMeta),
       );
     }
+    if (data.containsKey('crop_corners')) {
+      context.handle(
+        _cropCornersMeta,
+        cropCorners.isAcceptableOrUnknown(
+          data['crop_corners']!,
+          _cropCornersMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -1264,6 +1285,10 @@ class $PagesTable extends Pages with TableInfo<$PagesTable, PageRow> {
         DriftSqlType.string,
         data['${effectivePrefix}filter_type'],
       )!,
+      cropCorners: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}crop_corners'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -1288,6 +1313,11 @@ class PageRow extends DataClass implements Insertable<PageRow> {
   final int height;
   final int rotation;
   final String filterType;
+
+  /// Crop outline as JSON `[x0, y0, … x3, y3]`, normalised 0–1 to the original
+  /// image (top-left, top-right, bottom-right, bottom-left). Null = no crop.
+  /// Added in schema version 2.
+  final String? cropCorners;
   final DateTime createdAt;
   const PageRow({
     required this.id,
@@ -1300,6 +1330,7 @@ class PageRow extends DataClass implements Insertable<PageRow> {
     required this.height,
     required this.rotation,
     required this.filterType,
+    this.cropCorners,
     required this.createdAt,
   });
   @override
@@ -1319,6 +1350,9 @@ class PageRow extends DataClass implements Insertable<PageRow> {
     map['height'] = Variable<int>(height);
     map['rotation'] = Variable<int>(rotation);
     map['filter_type'] = Variable<String>(filterType);
+    if (!nullToAbsent || cropCorners != null) {
+      map['crop_corners'] = Variable<String>(cropCorners);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -1339,6 +1373,9 @@ class PageRow extends DataClass implements Insertable<PageRow> {
       height: Value(height),
       rotation: Value(rotation),
       filterType: Value(filterType),
+      cropCorners: cropCorners == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cropCorners),
       createdAt: Value(createdAt),
     );
   }
@@ -1359,6 +1396,7 @@ class PageRow extends DataClass implements Insertable<PageRow> {
       height: serializer.fromJson<int>(json['height']),
       rotation: serializer.fromJson<int>(json['rotation']),
       filterType: serializer.fromJson<String>(json['filterType']),
+      cropCorners: serializer.fromJson<String?>(json['cropCorners']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -1376,6 +1414,7 @@ class PageRow extends DataClass implements Insertable<PageRow> {
       'height': serializer.toJson<int>(height),
       'rotation': serializer.toJson<int>(rotation),
       'filterType': serializer.toJson<String>(filterType),
+      'cropCorners': serializer.toJson<String?>(cropCorners),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -1391,6 +1430,7 @@ class PageRow extends DataClass implements Insertable<PageRow> {
     int? height,
     int? rotation,
     String? filterType,
+    Value<String?> cropCorners = const Value.absent(),
     DateTime? createdAt,
   }) => PageRow(
     id: id ?? this.id,
@@ -1407,6 +1447,7 @@ class PageRow extends DataClass implements Insertable<PageRow> {
     height: height ?? this.height,
     rotation: rotation ?? this.rotation,
     filterType: filterType ?? this.filterType,
+    cropCorners: cropCorners.present ? cropCorners.value : this.cropCorners,
     createdAt: createdAt ?? this.createdAt,
   );
   PageRow copyWithCompanion(PagesCompanion data) {
@@ -1431,6 +1472,9 @@ class PageRow extends DataClass implements Insertable<PageRow> {
       filterType: data.filterType.present
           ? data.filterType.value
           : this.filterType,
+      cropCorners: data.cropCorners.present
+          ? data.cropCorners.value
+          : this.cropCorners,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -1448,6 +1492,7 @@ class PageRow extends DataClass implements Insertable<PageRow> {
           ..write('height: $height, ')
           ..write('rotation: $rotation, ')
           ..write('filterType: $filterType, ')
+          ..write('cropCorners: $cropCorners, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -1465,6 +1510,7 @@ class PageRow extends DataClass implements Insertable<PageRow> {
     height,
     rotation,
     filterType,
+    cropCorners,
     createdAt,
   );
   @override
@@ -1481,6 +1527,7 @@ class PageRow extends DataClass implements Insertable<PageRow> {
           other.height == this.height &&
           other.rotation == this.rotation &&
           other.filterType == this.filterType &&
+          other.cropCorners == this.cropCorners &&
           other.createdAt == this.createdAt);
 }
 
@@ -1495,6 +1542,7 @@ class PagesCompanion extends UpdateCompanion<PageRow> {
   final Value<int> height;
   final Value<int> rotation;
   final Value<String> filterType;
+  final Value<String?> cropCorners;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
   const PagesCompanion({
@@ -1508,6 +1556,7 @@ class PagesCompanion extends UpdateCompanion<PageRow> {
     this.height = const Value.absent(),
     this.rotation = const Value.absent(),
     this.filterType = const Value.absent(),
+    this.cropCorners = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -1522,6 +1571,7 @@ class PagesCompanion extends UpdateCompanion<PageRow> {
     required int height,
     this.rotation = const Value.absent(),
     this.filterType = const Value.absent(),
+    this.cropCorners = const Value.absent(),
     required DateTime createdAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -1542,6 +1592,7 @@ class PagesCompanion extends UpdateCompanion<PageRow> {
     Expression<int>? height,
     Expression<int>? rotation,
     Expression<String>? filterType,
+    Expression<String>? cropCorners,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
   }) {
@@ -1556,6 +1607,7 @@ class PagesCompanion extends UpdateCompanion<PageRow> {
       if (height != null) 'height': height,
       if (rotation != null) 'rotation': rotation,
       if (filterType != null) 'filter_type': filterType,
+      if (cropCorners != null) 'crop_corners': cropCorners,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -1572,6 +1624,7 @@ class PagesCompanion extends UpdateCompanion<PageRow> {
     Value<int>? height,
     Value<int>? rotation,
     Value<String>? filterType,
+    Value<String?>? cropCorners,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
   }) {
@@ -1586,6 +1639,7 @@ class PagesCompanion extends UpdateCompanion<PageRow> {
       height: height ?? this.height,
       rotation: rotation ?? this.rotation,
       filterType: filterType ?? this.filterType,
+      cropCorners: cropCorners ?? this.cropCorners,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
@@ -1624,6 +1678,9 @@ class PagesCompanion extends UpdateCompanion<PageRow> {
     if (filterType.present) {
       map['filter_type'] = Variable<String>(filterType.value);
     }
+    if (cropCorners.present) {
+      map['crop_corners'] = Variable<String>(cropCorners.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -1646,6 +1703,7 @@ class PagesCompanion extends UpdateCompanion<PageRow> {
           ..write('height: $height, ')
           ..write('rotation: $rotation, ')
           ..write('filterType: $filterType, ')
+          ..write('cropCorners: $cropCorners, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -2997,6 +3055,7 @@ typedef $$PagesTableCreateCompanionBuilder = PagesCompanion Function({
   required int height,
   Value<int> rotation,
   Value<String> filterType,
+  Value<String?> cropCorners,
   required DateTime createdAt,
   Value<int> rowid,
 });
@@ -3011,6 +3070,7 @@ typedef $$PagesTableUpdateCompanionBuilder = PagesCompanion Function({
   Value<int> height,
   Value<int> rotation,
   Value<String> filterType,
+  Value<String?> cropCorners,
   Value<DateTime> createdAt,
   Value<int> rowid,
 });
@@ -3106,6 +3166,11 @@ class $$PagesTableFilterComposer extends Composer<_$AppDatabase, $PagesTable> {
 
   ColumnFilters<String> get filterType => $composableBuilder(
     column: $table.filterType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get cropCorners => $composableBuilder(
+    column: $table.cropCorners,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3217,6 +3282,11 @@ class $$PagesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get cropCorners => $composableBuilder(
+    column: $table.cropCorners,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -3287,6 +3357,11 @@ class $$PagesTableAnnotationComposer
 
   GeneratedColumn<String> get filterType => $composableBuilder(
     column: $table.filterType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get cropCorners => $composableBuilder(
+    column: $table.cropCorners,
     builder: (column) => column,
   );
 
@@ -3380,6 +3455,7 @@ class $$PagesTableTableManager
                 Value<int> height = const Value.absent(),
                 Value<int> rotation = const Value.absent(),
                 Value<String> filterType = const Value.absent(),
+                Value<String?> cropCorners = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PagesCompanion(
@@ -3393,6 +3469,7 @@ class $$PagesTableTableManager
                 height: height,
                 rotation: rotation,
                 filterType: filterType,
+                cropCorners: cropCorners,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -3408,6 +3485,7 @@ class $$PagesTableTableManager
                 required int height,
                 Value<int> rotation = const Value.absent(),
                 Value<String> filterType = const Value.absent(),
+                Value<String?> cropCorners = const Value.absent(),
                 required DateTime createdAt,
                 Value<int> rowid = const Value.absent(),
               }) => PagesCompanion.insert(
@@ -3421,6 +3499,7 @@ class $$PagesTableTableManager
                 height: height,
                 rotation: rotation,
                 filterType: filterType,
+                cropCorners: cropCorners,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
