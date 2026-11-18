@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 
 import '../../core/errors/app_exception.dart';
 import '../../core/services/storage_service.dart';
+import '../../core/vision/quad.dart';
 import '../../domain/entities/scan_document.dart';
 import '../../domain/entities/scan_page.dart';
 import '../../domain/repositories/document_repository.dart';
@@ -109,6 +112,11 @@ class DriftDocumentRepository implements DocumentRepository {
                 originalPath: page.originalPath,
                 processedPath: Value(page.processedPath),
                 thumbnailPath: Value(page.thumbnailPath),
+                cropCorners: Value(
+                  page.cropCorners == null
+                      ? null
+                      : jsonEncode(page.cropCorners!.toList()),
+                ),
                 width: page.width,
                 height: page.height,
                 createdAt: now,
@@ -212,6 +220,21 @@ class DriftDocumentRepository implements DocumentRepository {
     rotation: row.rotation,
     filter:
         PageFilter.values.asNameMap()[row.filterType] ?? PageFilter.original,
+    cropCorners: _parseCorners(row.cropCorners),
     createdAt: row.createdAt,
   );
+
+  /// Reads stored crop corners; ignores malformed values rather than
+  /// failing to open the document.
+  static Quad? _parseCorners(String? json) {
+    if (json == null) return null;
+    try {
+      final values = (jsonDecode(json) as List<dynamic>)
+          .map((v) => (v as num).toDouble())
+          .toList();
+      return Quad.fromList(values);
+    } on Object {
+      return null;
+    }
+  }
 }
