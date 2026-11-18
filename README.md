@@ -20,7 +20,7 @@ watermarks, and no mandatory account.
 ## Tech stack
 
 Flutter · Dart · Material 3 · Riverpod · GoRouter · Drift (SQLite + FTS5) · ML Kit ·
-OpenCV · Tesseract · `pdf` · `pdfrx`
+Pure-Dart edge detection · Tesseract · `pdf` · `pdfrx`
 
 Details are in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
