@@ -80,6 +80,28 @@ unit-tested on any machine, and keeps the app small. The perspective warp, the o
 full-resolution step, uses the GPU through Flutter's own renderer. If heavier vision work
 is needed later (e.g. shadow removal), OpenCV can be added behind the same interfaces.
 
+## Editing
+
+Every page keeps its untouched original. Edits are stored as settings on the page row
+(`crop_corners`, `rotation`, `filter_type`, `brightness`, `contrast`, `sharpness`) and the
+processed image is always re-rendered from the original by `PageRenderer`:
+
+```
+original ─▶ decode (EXIF applied, ≤ 4096 px) ─▶ homography crop + quarter-turn rotation
+         (one GPU draw) ─▶ filter preset ─▶ brightness/contrast ─▶ unsharp mask ─▶ JPEG
+```
+
+* The editor preview uses the same renderer at 1200 px, so preview and result match.
+* Filters (`lib/core/vision/image_filters.dart`): grayscale (BT.601), black & white
+  (Bradley–Roth adaptive threshold over an integral image, which handles shadows), enhanced
+  (auto levels + paper whitening + mild sharpen), color document (auto levels + saturation
+  + whitening).
+* Each save writes the page under a new file name (`<pageId>-<timestamp>.jpg`) so image
+  caches never show a stale version, then deletes the previous version.
+* Undo/redo is an in-memory `EditHistory<PageEdits>`; a slider or corner drag is one step.
+* Page operations (append, retake, delete, reorder) run in one transaction and refresh
+  the document's page count, cover, size and search-result page numbers.
+
 ## Storage
 
 ```
