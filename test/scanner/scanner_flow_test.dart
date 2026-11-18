@@ -84,6 +84,35 @@ class FakeImport implements ImportPagesUseCase {
         );
     return id;
   }
+
+  /// (documentId, paths) for every append.
+  final List<(String, List<String>)> appended = [];
+
+  /// (pageId, path) for every retake.
+  final List<(String, String)> replaced = [];
+
+  @override
+  Future<void> appendTo(
+    String documentId,
+    List<PageSource> sources, {
+    bool deleteSources = false,
+    int jpegQuality = 88,
+    ImportProgress? onProgress,
+  }) async {
+    if (fail) throw const StorageException('Disk full.');
+    appended.add((documentId, [for (final s in sources) s.path]));
+  }
+
+  @override
+  Future<void> replacePage(
+    String pageId,
+    PageSource source, {
+    bool deleteSource = false,
+    int jpegQuality = 88,
+  }) async {
+    if (fail) throw const StorageException('Disk full.');
+    replaced.add((pageId, source.path));
+  }
 }
 
 void main() {
