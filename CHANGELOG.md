@@ -6,6 +6,20 @@ All notable changes to Scanly are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-19 (Milestone 6: OCR)
+
+### Added
+- On-device text recognition: English (ML Kit), Bangla and Bangla + English (Tesseract).
+- Automatic OCR after scanning and importing, with progress, stop/resume, retry and resume
+  after restart. Pages are re-read after they are edited or rotated.
+- Page text screen with copy and re-run in another language.
+- Search inside a document, plus OCR text in global search (Bengali-safe).
+- Searchable PDFs with an invisible text layer and an embedded Bengali font.
+- On-device OCR benchmark (character and word error rates).
+
+### Changed
+- Release builds include shrinking rules for ML Kit and Tesseract.
+
 ## [0.5.0] - 2026-11-18 (Milestone 5: PDF)
 
 ### Added
