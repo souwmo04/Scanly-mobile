@@ -1,0 +1,52 @@
+Scanly turns your phone into a document scanner that works completely offline. Scan receipts, letters, forms, notes and books, clean them up, turn them into PDFs and find them again by the words inside them. Everything happens on your device.
+
+<b>Private by design</b>
+<ul>
+<li>No account, no sign-in, no cloud.</li>
+<li>No ads, no analytics, no trackers.</li>
+<li>The release app does not even request internet access. The only permission is the camera.</li>
+<li>Your scans stay on your phone until you choose to share them.</li>
+</ul>
+
+<b>Free, with nothing held back</b>
+<ul>
+<li>No subscription, no in-app purchases, no page limits.</li>
+<li>No watermark on your PDFs.</li>
+</ul>
+
+<b>Scanning</b>
+<ul>
+<li>Automatic document edge detection with auto-capture when the page is steady.</li>
+<li>Perspective correction and auto-crop.</li>
+<li>Multi-page scans, flash, front/back camera.</li>
+<li>Import existing photos through the system photo picker.</li>
+</ul>
+
+<b>Editing</b>
+<ul>
+<li>Four-corner crop with a magnifier, rotate, retake a page.</li>
+<li>Filters: original, grayscale, black and white, enhanced, color document.</li>
+<li>Brightness, contrast and sharpness, with undo and redo. Your original image is never overwritten.</li>
+<li>Reorder, add and delete pages.</li>
+</ul>
+
+<b>PDF</b>
+<ul>
+<li>A4, A5, Letter, Legal or original size; portrait, landscape or automatic.</li>
+<li>Adjustable compression to keep files small.</li>
+<li>Searchable PDFs with an invisible text layer, including Bangla.</li>
+<li>Merge and split documents, share several at once, or print.</li>
+</ul>
+
+<b>Text recognition (OCR) in Bangla and English</b>
+<ul>
+<li>Recognizes English, Bangla (বাংলা) and mixed Bangla-English text on the device.</li>
+<li>Runs in the background after each scan; copy the text or search it.</li>
+</ul>
+
+<b>Library and search</b>
+<ul>
+<li>Folders with colors, favorites, sorting, grid or list view.</li>
+<li>Full-text search across document names and recognized text, with matching pages highlighted.</li>
+<li>Light and dark themes.</li>
+</ul>

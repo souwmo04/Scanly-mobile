@@ -1,0 +1,8 @@
+Scanly 1.0.0, the first public release.
+
+- Offline document scanner with edge detection, auto-capture and perspective correction
+- Editor: crop, rotate, filters, brightness/contrast/sharpness, undo/redo, page organizer
+- PDF export in A4/A5/Letter/Legal, compression, merge, split, share, print
+- On-device OCR for English, Bangla and mixed text; searchable PDFs
+- Folders, favorites and full-text search
+- No account, no ads, no internet permission
