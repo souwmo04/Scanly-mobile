@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:path/path.dart' as p;
@@ -13,6 +15,7 @@ import 'shared/providers/core_providers.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  _registerBundledLicenses();
 
   final supportDir = await getApplicationSupportDirectory();
   final storage = StorageService(Directory(p.join(supportDir.path, 'scanly')));
@@ -39,4 +42,17 @@ Future<void> main() async {
   runApp(
     UncontrolledProviderScope(container: container, child: const ScanlyApp()),
   );
+}
+
+/// Adds licences of bundled data (OCR models, font) to the licence page.
+void _registerBundledLicenses() {
+  LicenseRegistry.addLicense(() async* {
+    yield LicenseEntryWithLineBreaks(
+      ['tessdata_fast (Tesseract OCR models)'],
+      await rootBundle.loadString('assets/licenses/tessdata_fast_LICENSE.txt'),
+    );
+    yield LicenseEntryWithLineBreaks([
+      'Noto Sans Bengali',
+    ], await rootBundle.loadString('assets/licenses/NotoSansBengali_OFL.txt'));
+  });
 }
