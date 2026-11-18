@@ -9,9 +9,11 @@ import '../../core/routing/routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/utils/formatters.dart';
+import '../../domain/entities/app_settings.dart';
 import '../../domain/services/document_scanner.dart';
 import '../../shared/providers/scanner_providers.dart';
 import '../../shared/widgets/dialogs.dart';
+import '../settings/settings_controller.dart';
 import 'camera_capture_view.dart';
 
 enum _Phase { launching, camera, saving, failed }
@@ -23,7 +25,10 @@ enum _Phase { launching, camera, saving, failed }
 /// 2. If ML Kit is unavailable, or on iOS, shows Scanly's own camera.
 /// 3. Saves the pages as a new document and opens it.
 class ScannerScreen extends ConsumerStatefulWidget {
-  const ScannerScreen({super.key});
+  const ScannerScreen({this.forceCamera = false, super.key});
+
+  /// Skip ML Kit and open the built-in camera directly.
+  final bool forceCamera;
 
   @override
   ConsumerState<ScannerScreen> createState() => _ScannerScreenState();
@@ -44,7 +49,10 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
 
   Future<void> _start() async {
     final scanner = ref.read(documentScannerProvider);
-    if (!scanner.isSupported) {
+    final engine = ref.read(settingsControllerProvider).scannerEngine;
+    if (widget.forceCamera ||
+        engine == ScannerEngine.builtInCamera ||
+        !scanner.isSupported) {
       setState(() => _phase = _Phase.camera);
       return;
     }
@@ -60,7 +68,22 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
             CapturedPage(path, isTemporary: true),
         ]);
       case ScanStatus.cancelled:
+        // Google's scanner reports a failed first-time module download the
+        // same way as a normal cancel, so always offer a way forward.
+        final messenger = ScaffoldMessenger.of(context);
+        final router = GoRouter.of(context);
         context.pop();
+        messenger
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: const Text('Scan cancelled'),
+              action: SnackBarAction(
+                label: 'Use camera',
+                onPressed: () => router.push(Routes.scanWithCamera),
+              ),
+            ),
+          );
       case ScanStatus.unavailable:
         setState(() => _phase = _Phase.camera);
         showMessage(
