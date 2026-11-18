@@ -6,6 +6,19 @@ All notable changes to Scanly are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-18 (Milestone 3: Edge detection and auto-capture)
+
+### Added
+- Live document edge detection in the built-in camera, with an outline overlay.
+- Automatic capture once the document holds steady, with an Auto/Manual toggle.
+- Automatic perspective correction of camera captures and imported photos. The
+  original photo is always kept.
+- Crop corners saved per page for later manual adjustment (database schema v2).
+
+### Changed
+- The scanning pipeline is implemented in pure Dart instead of OpenCV, with a GPU
+  perspective warp. No native build toolchain is needed and app size stays small.
+
 ## [0.2.0] - 2026-11-18 (Milestone 2: Android scanner)
 
 ### Added
