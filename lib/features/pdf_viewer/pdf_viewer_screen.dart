@@ -2,9 +2,11 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/errors/app_exception.dart';
+import '../../core/routing/routes.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/utils/formatters.dart';
 import '../../domain/services/pdf_service.dart';
@@ -257,6 +259,14 @@ class _PdfViewerScreenState extends ConsumerState<PdfViewerScreen> {
     }
   }
 
+  /// Searches the document's recognised text and shows the chosen page.
+  Future<void> _searchText() async {
+    final index = await context.push<int>(
+      Routes.documentSearch(widget.documentId),
+    );
+    if (index != null && mounted) _goTo(index);
+  }
+
   Future<void> _jumpToPage() async {
     final page = await showDialog<int>(
       context: context,
@@ -326,6 +336,11 @@ class _PdfViewerScreenState extends ConsumerState<PdfViewerScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            tooltip: 'Search text',
+            icon: const Icon(Icons.search_rounded),
+            onPressed: ready && _pageCount > 0 ? _searchText : null,
+          ),
           IconButton(
             tooltip: 'Share',
             icon: const Icon(Icons.ios_share_rounded),

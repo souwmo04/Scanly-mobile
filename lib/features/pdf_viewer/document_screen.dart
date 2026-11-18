@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,6 +14,8 @@ import '../../shared/providers/core_providers.dart';
 import '../../shared/providers/library_providers.dart';
 import '../../shared/widgets/state_views.dart';
 import '../library/document_actions.dart';
+import '../ocr/ocr_queue.dart';
+import '../ocr/ocr_widgets.dart';
 import 'pdf_actions.dart';
 
 /// Shows a document's pages with swipe navigation and pinch-to-zoom, and
@@ -144,6 +147,30 @@ class _DocumentViewState extends ConsumerState<_DocumentView> {
     }
   }
 
+  Future<void> _recognizeText() async {
+    final language = await pickOcrLanguage(context);
+    if (language == null || !mounted) return;
+    await ref
+        .read(ocrQueueProvider.notifier)
+        .enqueueDocument(widget.document.id, language: language);
+  }
+
+  Future<void> _openText() async {
+    if (widget.pages.isEmpty) return;
+    await context.push<Object?>(
+      Routes.pageText(widget.document.id, widget.pages[_index].id),
+    );
+  }
+
+  Future<void> _searchText() async {
+    final index = await context.push<int>(
+      Routes.documentSearch(widget.document.id),
+    );
+    if (index == null || !mounted || !_controller.hasClients) return;
+    if (index < 0 || index >= widget.pages.length) return;
+    _controller.jumpToPage(index);
+  }
+
   void _editCurrentPage() {
     if (widget.pages.isEmpty) return;
     _openAndRefresh(
@@ -171,6 +198,11 @@ class _DocumentViewState extends ConsumerState<_DocumentView> {
         ),
         actions: [
           IconButton(
+            tooltip: 'Search text',
+            icon: const Icon(Icons.search_rounded),
+            onPressed: pages.isEmpty ? null : _searchText,
+          ),
+          IconButton(
             tooltip: 'Edit page',
             icon: const Icon(Icons.tune_rounded),
             onPressed: pages.isEmpty ? null : _editCurrentPage,
@@ -195,6 +227,8 @@ class _DocumentViewState extends ConsumerState<_DocumentView> {
               'share' => _sharePdf(),
               'print' => _printPdf(),
               'split' => _split(),
+              'ocr' => _recognizeText(),
+              'text' => _openText(),
               'rename' => _rename(),
               'delete' => _delete(),
               _ => null,
@@ -203,6 +237,8 @@ class _DocumentViewState extends ConsumerState<_DocumentView> {
               if (pages.isNotEmpty) ...const [
                 PopupMenuItem(value: 'share', child: Text('Share PDF')),
                 PopupMenuItem(value: 'print', child: Text('Print')),
+                PopupMenuItem(value: 'ocr', child: Text('Recognize text')),
+                PopupMenuItem(value: 'text', child: Text('Page text')),
               ],
               if (pages.length > 1)
                 const PopupMenuItem(
@@ -231,6 +267,13 @@ class _DocumentViewState extends ConsumerState<_DocumentView> {
             )
           : Column(
               children: [
+                // At the top so the floating PDF button never covers its
+                // action.
+                DocumentOcrStatus(
+                  documentId: doc.id,
+                  pages: pages,
+                  onViewText: () => unawaited(_openText()),
+                ),
                 Expanded(
                   child: PageView.builder(
                     controller: _controller,
