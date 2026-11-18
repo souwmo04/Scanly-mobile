@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:camera/camera.dart';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +11,7 @@ import 'package:scanly/app.dart';
 import 'package:scanly/core/services/storage_service.dart';
 import 'package:scanly/data/database/app_database.dart';
 import 'package:scanly/shared/providers/core_providers.dart';
+import 'package:scanly/shared/providers/scanner_providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -50,6 +52,9 @@ void main() {
           sharedPreferencesProvider.overrideWithValue(prefs),
           storageServiceProvider.overrideWithValue(storage),
           appDatabaseProvider.overrideWithValue(db),
+          availableCamerasProvider.overrideWithValue(
+            () async => <CameraDescription>[],
+          ),
         ],
         child: const ScanlyApp(),
       ),
@@ -89,7 +94,9 @@ void main() {
 
     await tester.tap(find.bySemanticsLabel('Scan a document').first);
     await tester.pumpAndSettle();
-    expect(find.text('Scanner not available in this build'), findsOneWidget);
+    // ML Kit is Android-only and the test device has no camera, so the
+    // built-in camera explains that and offers photo import.
+    expect(find.text('No camera found'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Close scanner'));
     await tester.pumpAndSettle();
