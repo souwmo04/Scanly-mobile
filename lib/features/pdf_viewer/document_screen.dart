@@ -14,6 +14,7 @@ import '../../shared/providers/core_providers.dart';
 import '../../shared/providers/library_providers.dart';
 import '../../shared/widgets/state_views.dart';
 import '../library/document_actions.dart';
+import '../library/document_info_sheet.dart';
 import '../ocr/ocr_queue.dart';
 import '../ocr/ocr_widgets.dart';
 import 'pdf_actions.dart';
@@ -229,6 +230,7 @@ class _DocumentViewState extends ConsumerState<_DocumentView> {
               'split' => _split(),
               'ocr' => _recognizeText(),
               'text' => _openText(),
+              'info' => showDocumentInfo(context, widget.document.id),
               'rename' => _rename(),
               'delete' => _delete(),
               _ => null,
@@ -245,6 +247,7 @@ class _DocumentViewState extends ConsumerState<_DocumentView> {
                   value: 'split',
                   child: Text('Split document'),
                 ),
+              const PopupMenuItem(value: 'info', child: Text('Info')),
               const PopupMenuItem(value: 'rename', child: Text('Rename')),
               const PopupMenuItem(value: 'delete', child: Text('Delete')),
             ],
