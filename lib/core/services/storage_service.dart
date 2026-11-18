@@ -182,7 +182,9 @@ class StorageService {
     final normalizedRoot = p.normalize(p.absolute(root.path));
     final normalizedPath = p.normalize(p.absolute(path));
     if (!p.isWithin(normalizedRoot, normalizedPath)) {
-      throw const StorageException('Refusing to touch a file outside app storage.');
+      throw const StorageException(
+        'Refusing to touch a file outside app storage.',
+      );
     }
   }
 
