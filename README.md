@@ -37,7 +37,7 @@ Details are in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 git clone https://github.com/souwmo04/Scanly-mobile.git
 cd Scanly-mobile
 flutter pub get
-dart run build_runner build --delete-conflicting-outputs
+dart run build_runner build
 flutter run
 ```
 

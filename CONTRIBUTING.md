@@ -36,7 +36,7 @@ test(pdf): cover Legal page size
 Drift and Riverpod generate code. After you change a table or provider, run:
 
 ```bash
-dart run build_runner build --delete-conflicting-outputs
+dart run build_runner build
 ```
 
 ## Signing
