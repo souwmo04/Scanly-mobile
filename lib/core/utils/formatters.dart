@@ -47,3 +47,7 @@ String greetingFor(DateTime time) {
 /// Default title for a new scan, e.g. "Scan 18 Nov 2026 14.05".
 String defaultScanTitle(DateTime time) =>
     'Scan ${DateFormat('d MMM yyyy HH.mm').format(time)}';
+
+/// Default title for imported images, e.g. "Import 18 Nov 2026 14.05".
+String defaultImportTitle(DateTime time) =>
+    'Import ${DateFormat('d MMM yyyy HH.mm').format(time)}';
