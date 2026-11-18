@@ -61,6 +61,20 @@ class SettingsScreen extends ConsumerWidget {
           const _GroupLabel('Scanning'),
           _SettingsCard(
             children: [
+              // Google's scanner exists only on Android; iOS always uses
+              // Scanly's camera, so the choice is hidden there.
+              if (Theme.of(context).platform == TargetPlatform.android) ...[
+                _ChoiceTile<ScannerEngine>(
+                  icon: Icons.document_scanner_outlined,
+                  title: 'Scanner',
+                  value: settings.scannerEngine,
+                  options: ScannerEngine.values,
+                  labelOf: _scannerEngineLabel,
+                  onChanged: (v) =>
+                      controller.update((s) => s.copyWith(scannerEngine: v)),
+                ),
+                const Divider(indent: 56),
+              ],
               _ChoiceTile<ScanQuality>(
                 icon: Icons.high_quality_outlined,
                 title: 'Scan quality',
@@ -207,6 +221,11 @@ String _scanQualityLabel(ScanQuality v) => switch (v) {
   ScanQuality.standard => 'Standard (smaller files)',
   ScanQuality.high => 'High (recommended)',
   ScanQuality.maximum => 'Maximum',
+};
+
+String _scannerEngineLabel(ScannerEngine v) => switch (v) {
+  ScannerEngine.automatic => 'Google scanner (recommended)',
+  ScannerEngine.builtInCamera => 'Built-in camera',
 };
 
 String _compressionLabel(ImageCompression v) => switch (v) {
