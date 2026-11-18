@@ -6,11 +6,15 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../domain/entities/folder.dart';
 import '../../domain/entities/scan_document.dart';
+import '../../domain/usecases/duplicate_document.dart';
 import '../../shared/providers/core_providers.dart';
 import '../../shared/widgets/action_sheet.dart';
 import '../../shared/widgets/dialogs.dart';
+import '../pdf_viewer/pdf_actions.dart';
+import 'document_info_sheet.dart';
+import 'library_use_cases.dart';
 
-enum _DocumentAction { rename, favorite, move, delete }
+enum _DocumentAction { info, rename, favorite, move, duplicate, delete }
 
 /// Shows the per-document menu and performs the chosen action.
 Future<void> showDocumentActions(
@@ -18,10 +22,15 @@ Future<void> showDocumentActions(
   WidgetRef ref,
   ScanDocument document,
 ) async {
-  final action = await showActionSheet<_DocumentAction>(
+  final action = await _showScrollableActionSheet<_DocumentAction>(
     context,
     title: document.title,
     actions: [
+      const SheetAction(
+        value: _DocumentAction.info,
+        label: 'Info',
+        icon: Icons.info_outline_rounded,
+      ),
       const SheetAction(
         value: _DocumentAction.rename,
         label: 'Rename',
@@ -42,6 +51,11 @@ Future<void> showDocumentActions(
         icon: Icons.drive_file_move_outline,
       ),
       const SheetAction(
+        value: _DocumentAction.duplicate,
+        label: 'Duplicate',
+        icon: Icons.copy_all_rounded,
+      ),
+      const SheetAction(
         value: _DocumentAction.delete,
         label: 'Delete',
         icon: Icons.delete_outline_rounded,
@@ -52,6 +66,8 @@ Future<void> showDocumentActions(
   if (action == null || !context.mounted) return;
 
   switch (action) {
+    case _DocumentAction.info:
+      await showDocumentInfo(context, document.id);
     case _DocumentAction.rename:
       await renameDocument(context, ref, document);
     case _DocumentAction.favorite:
@@ -63,8 +79,43 @@ Future<void> showDocumentActions(
       );
     case _DocumentAction.move:
       await moveDocuments(context, ref, [document.id]);
+    case _DocumentAction.duplicate:
+      await duplicateDocument(context, ref, document);
     case _DocumentAction.delete:
       await deleteDocuments(context, ref, [document.id]);
+  }
+}
+
+/// Copies [document] (pages, edits and recognised text) into a new
+/// document next to it. Returns the new id, or `null` after showing the
+/// error.
+Future<String?> duplicateDocument(
+  BuildContext context,
+  WidgetRef ref,
+  ScanDocument document,
+) async {
+  final duplicate = ref.read(duplicateDocumentProvider);
+  try {
+    final id = await runWithProgressDialog(
+      context,
+      label: (_) => 'Duplicating document…',
+      task: (_) => duplicate(document.id),
+    );
+    if (context.mounted) {
+      showMessage(
+        context,
+        'Created "${DuplicateDocumentUseCase.copyTitle(document.title)}"',
+      );
+    }
+    return id;
+  } on Object catch (error) {
+    if (context.mounted) {
+      showMessage(
+        context,
+        'Could not duplicate the document. ${describeError(error)}',
+      );
+    }
+    return null;
   }
 }
 
@@ -151,6 +202,68 @@ Future<bool> moveDocuments(
     );
   }
   return ok;
+}
+
+/// Like [showActionSheet], but scrolls when the menu is taller than the
+/// screen allows (the document menu has many entries, and short phones or
+/// large text sizes would otherwise overflow).
+Future<T?> _showScrollableActionSheet<T>(
+  BuildContext context, {
+  required List<SheetAction<T>> actions,
+  required String title,
+}) {
+  return showModalBottomSheet<T>(
+    context: context,
+    useSafeArea: true,
+    isScrollControlled: true,
+    builder: (context) {
+      final theme = Theme.of(context);
+      final scheme = theme.colorScheme;
+      return SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.only(bottom: AppSpacing.md),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.xxl,
+                  0,
+                  AppSpacing.xxl,
+                  AppSpacing.md,
+                ),
+                child: Text(
+                  title,
+                  style: theme.textTheme.titleMedium,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              for (final action in actions)
+                ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xxl,
+                  ),
+                  leading: Icon(
+                    action.icon,
+                    color: action.destructive ? scheme.error : null,
+                  ),
+                  title: Text(
+                    action.label,
+                    style: action.destructive
+                        ? TextStyle(color: scheme.error)
+                        : null,
+                  ),
+                  onTap: () => Navigator.of(context).pop(action.value),
+                ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
 }
 
 /// Runs [action] and reports failures as a snackbar. Returns success.
