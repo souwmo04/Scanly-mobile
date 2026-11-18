@@ -1,0 +1,116 @@
+# Builds release-signed APKs and an App Bundle when a version tag such as
+# v1.0.0 is pushed, and publishes them as a GitHub Release.
+#
+# Required repository secrets (Settings → Secrets and variables → Actions):
+#   SCANLY_KEYSTORE_BASE64  base64 of the release keystore (.jks)
+#   SCANLY_KEYSTORE_PASSWORD
+#   SCANLY_KEY_ALIAS
+#   SCANLY_KEY_PASSWORD
+# See docs/RELEASE.md. Without them the workflow stops: Scanly never publishes
+# debug-signed builds, because they could not update existing installs.
+name: Release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the tag matches pubspec.yaml
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          version="$(grep -E '^version:' pubspec.yaml | sed -E 's/version: *([0-9.]+)\+.*/\1/')"
+          if [ "$tag" != "$version" ]; then
+            echo "::error::Tag v$tag does not match pubspec version $version"
+            exit 1
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      - name: Restore the signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.SCANLY_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.SCANLY_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.SCANLY_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.SCANLY_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEYSTORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASSWORD" ]; then
+            echo "::error::Signing secrets are missing. See docs/RELEASE.md."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/scanly-release.jks"
+          {
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyPassword=$KEY_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "storeFile=$RUNNER_TEMP/scanly-release.jks"
+          } > android/key.properties
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.50.0"
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze and test
+        run: |
+          flutter analyze
+          flutter test --timeout 120s
+
+      # Every APK gets the same versionCode, so any variant can update any
+      # other (they share the signing key and application id).
+      - name: Build APKs and App Bundle
+        run: |
+          flutter build apk --release --split-per-abi \
+            -PrequireReleaseSigning=true -Pforce-version-code-ignoring-abi=true
+          flutter build apk --release \
+            -PrequireReleaseSigning=true -Pforce-version-code-ignoring-abi=true
+          flutter build appbundle --release -PrequireReleaseSigning=true
+
+      - name: Collect release files
+        run: |
+          mkdir -p dist
+          out=build/app/outputs
+          cp "$out/flutter-apk/app-arm64-v8a-release.apk"   "dist/Scanly-$VERSION-arm64-v8a.apk"
+          cp "$out/flutter-apk/app-armeabi-v7a-release.apk" "dist/Scanly-$VERSION-armeabi-v7a.apk"
+          cp "$out/flutter-apk/app-x86_64-release.apk"      "dist/Scanly-$VERSION-x86_64.apk"
+          cp "$out/flutter-apk/app-release.apk"             "dist/Scanly-$VERSION-universal.apk"
+          cp "$out/bundle/release/app-release.aab"          "dist/Scanly-$VERSION.aab"
+          (cd dist && sha256sum * > SHA256SUMS.txt)
+
+      - name: Extract release notes from CHANGELOG.md
+        run: |
+          awk -v v="$VERSION" '
+            $0 ~ "^## \\[" v "\\]" { found = 1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > dist/RELEASE_NOTES.md
+          cat docs/INSTALL_SNIPPET.md >> dist/RELEASE_NOTES.md
+
+      - name: Publish the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "Scanly $GITHUB_REF_NAME" \
+            --notes-file dist/RELEASE_NOTES.md \
+            dist/*.apk dist/*.aab dist/SHA256SUMS.txt
+
+      - name: Remove the signing key
+        if: always()
+        run: rm -f android/key.properties "$RUNNER_TEMP/scanly-release.jks"
