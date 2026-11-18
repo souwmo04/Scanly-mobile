@@ -1,5 +1,10 @@
 # Launch Screen Assets
 
-You can customize the launch screen with your own desired assets by replacing the image files in this directory.
+`LaunchImage.png`, `@2x` and `@3x` are the Scanly mark (120 pt, transparent)
+shown centred on the navy background of `Base.lproj/LaunchScreen.storyboard`.
 
-You can also do it by opening your Flutter project's Xcode project with `open ios/Runner.xcworkspace`, selecting `Runner/Assets.xcassets` in the Project Navigator and dropping in the desired images.
+They are generated, together with the app icons, by:
+
+    dart run tool/generate_app_icons.dart
+
+Edit the generator rather than these files.
