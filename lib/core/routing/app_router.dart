@@ -7,6 +7,8 @@ import '../../features/editor/page_organizer_screen.dart';
 import '../../features/folders/folder_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/library/library_screen.dart';
+import '../../features/ocr/document_text_search_screen.dart';
+import '../../features/ocr/ocr_text_screen.dart';
 import '../../features/pdf_viewer/document_screen.dart';
 import '../../features/pdf_viewer/pdf_viewer_screen.dart';
 import '../../features/scanner/scanner_screen.dart';
@@ -111,6 +113,20 @@ GoRouter createRouter() => GoRouter(
         documentId: state.pathParameters['id']!,
         initialPage: int.tryParse(state.uri.queryParameters['page'] ?? ''),
       ),
+    ),
+    GoRoute(
+      path: '/document/:id/page/:pageId/text',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => OcrTextScreen(
+        documentId: state.pathParameters['id']!,
+        pageId: state.pathParameters['pageId']!,
+      ),
+    ),
+    GoRoute(
+      path: '/document/:id/search',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) =>
+          DocumentTextSearchScreen(documentId: state.pathParameters['id']!),
     ),
     GoRoute(
       path: '/document/:id/page/:pageId/edit',

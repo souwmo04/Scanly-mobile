@@ -20,6 +20,15 @@ abstract final class Routes {
   static String editPage(String documentId, String pageId) =>
       '/document/$documentId/page/$pageId/edit';
 
+  /// Recognised text of one page.
+  static String pageText(String documentId, String pageId) =>
+      '/document/$documentId/page/$pageId/text';
+
+  /// Search in the recognised text of a document. Pops with the zero-based
+  /// index of the chosen page.
+  static String documentSearch(String documentId) =>
+      '/document/$documentId/search';
+
   /// PDF viewer of a document, optionally at a one-based [page].
   static String pdf(String documentId, {int? page}) => page == null
       ? '/document/$documentId/pdf'
