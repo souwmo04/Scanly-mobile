@@ -11,6 +11,7 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/utils/formatters.dart';
 import '../../domain/entities/app_settings.dart';
 import '../../domain/services/document_scanner.dart';
+import '../../domain/usecases/import_pages.dart';
 import '../../shared/providers/scanner_providers.dart';
 import '../../shared/widgets/dialogs.dart';
 import '../settings/settings_controller.dart';
@@ -65,7 +66,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       case ScanStatus.completed:
         await _save([
           for (final path in result.imagePaths)
-            CapturedPage(path, isTemporary: true),
+            CapturedPage(path, isTemporary: true, autoCrop: false),
         ]);
       case ScanStatus.cancelled:
         // Google's scanner reports a failed first-time module download the
@@ -110,7 +111,11 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       final id = await ref
           .read(importPagesProvider)
           .call(
-            pages.map((p) => p.path).toList(),
+            [for (final p in pages) PageSource(p.path, autoCrop: p.autoCrop)],
+            jpegQuality: ref
+                .read(settingsControllerProvider)
+                .compression
+                .jpegQuality,
             title: defaultScanTitle(DateTime.now()),
             onProgress: (done, total) {
               if (mounted) setState(() => _saved = done);

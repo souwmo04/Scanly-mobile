@@ -14,13 +14,21 @@ import '../settings/settings_controller.dart';
 
 /// A page captured or picked in the camera screen.
 class CapturedPage {
-  const CapturedPage(this.path, {required this.isTemporary});
+  const CapturedPage(
+    this.path, {
+    required this.isTemporary,
+    this.autoCrop = true,
+  });
 
   final String path;
 
   /// True for camera captures (temporary files we may delete after saving);
   /// false for gallery picks.
   final bool isTemporary;
+
+  /// Detect and flatten the document when saving. False for pages that
+  /// Google's scanner already cropped.
+  final bool autoCrop;
 }
 
 /// Built-in camera with manual capture, flash, camera switching, gallery

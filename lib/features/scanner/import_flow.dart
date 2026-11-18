@@ -7,8 +7,11 @@ import '../../core/errors/app_exception.dart';
 import '../../core/routing/routes.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/utils/formatters.dart';
+import '../../domain/entities/app_settings.dart';
+import '../../domain/usecases/import_pages.dart';
 import '../../shared/providers/scanner_providers.dart';
 import '../../shared/widgets/dialogs.dart';
+import '../settings/settings_controller.dart';
 
 /// Lets the user pick images from their photo library, saves them as one
 /// document and opens it.
@@ -34,7 +37,11 @@ Future<void> importImagesFromGallery(
     final id = await ref
         .read(importPagesProvider)
         .call(
-          paths,
+          [for (final p in paths) PageSource(p, autoCrop: true)],
+          jpegQuality: ref
+              .read(settingsControllerProvider)
+              .compression
+              .jpegQuality,
           title: defaultImportTitle(DateTime.now()),
           folderId: folderId,
           onProgress: (done, _) => progress.value = done,
