@@ -24,12 +24,25 @@ enum _Phase { launching, camera, saving, failed }
 /// 1. On Android, opens Google's ML Kit Document Scanner (edge detection,
 ///    auto-capture, crop, multi-page and gallery import built in).
 /// 2. If ML Kit is unavailable, or on iOS, shows Scanly's own camera.
-/// 3. Saves the pages as a new document and opens it.
+/// 3. Saves the pages as a new document and opens it, or adds them to an
+///    existing document ([appendToDocument]), or replaces one page's image
+///    ([retakePageId]).
 class ScannerScreen extends ConsumerStatefulWidget {
-  const ScannerScreen({this.forceCamera = false, super.key});
+  const ScannerScreen({
+    this.forceCamera = false,
+    this.appendToDocument,
+    this.retakePageId,
+    super.key,
+  });
 
   /// Skip ML Kit and open the built-in camera directly.
   final bool forceCamera;
+
+  /// Add the scanned pages to the end of this document.
+  final String? appendToDocument;
+
+  /// Replace the image of this page with the first scanned page.
+  final String? retakePageId;
 
   @override
   ConsumerState<ScannerScreen> createState() => _ScannerScreenState();
@@ -58,7 +71,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       return;
     }
     final result = await scanner.scan(
-      pageLimit: maxPagesPerScan,
+      pageLimit: widget.retakePageId != null ? 1 : maxPagesPerScan,
       allowGalleryImport: true,
     );
     if (!mounted) return;
@@ -107,23 +120,54 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       _total = pages.length;
       _error = null;
     });
+    final importer = ref.read(importPagesProvider);
+    final quality = ref.read(settingsControllerProvider).compression;
+    final sources = [
+      for (final p in pages) PageSource(p.path, autoCrop: p.autoCrop),
+    ];
+    void progress(int done, int total) {
+      if (mounted) setState(() => _saved = done);
+    }
+
     try {
-      final id = await ref
-          .read(importPagesProvider)
-          .call(
-            [for (final p in pages) PageSource(p.path, autoCrop: p.autoCrop)],
-            jpegQuality: ref
-                .read(settingsControllerProvider)
-                .compression
-                .jpegQuality,
-            title: defaultScanTitle(DateTime.now()),
-            onProgress: (done, total) {
-              if (mounted) setState(() => _saved = done);
-            },
-          );
+      final retake = widget.retakePageId;
+      final append = widget.appendToDocument;
+      if (retake != null) {
+        await importer.replacePage(
+          retake,
+          sources.first,
+          jpegQuality: quality.jpegQuality,
+        );
+      } else if (append != null) {
+        await importer.appendTo(
+          append,
+          sources,
+          jpegQuality: quality.jpegQuality,
+          onProgress: progress,
+        );
+      } else {
+        final id = await importer.call(
+          sources,
+          jpegQuality: quality.jpegQuality,
+          title: defaultScanTitle(DateTime.now()),
+          onProgress: progress,
+        );
+        _deleteTemporary(pages);
+        if (mounted) context.pushReplacement(Routes.document(id));
+        return;
+      }
       _deleteTemporary(pages);
       if (!mounted) return;
-      context.pushReplacement(Routes.document(id));
+      final message = retake != null
+          ? 'Page retaken'
+          : (pages.length == 1
+                ? '1 page added'
+                : '${pages.length} pages added');
+      final messenger = ScaffoldMessenger.of(context);
+      context.pop(true);
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(message)));
     } on Object catch (error) {
       if (!mounted) return;
       setState(() {
