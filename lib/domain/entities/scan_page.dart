@@ -1,3 +1,5 @@
+import '../../core/vision/quad.dart';
+
 /// Image filter applied to a page. Stored by [name] in the database.
 enum PageFilter { original, grayscale, blackWhite, enhanced, colorDocument }
 
@@ -15,6 +17,7 @@ class ScanPage {
     required this.createdAt,
     this.processedPath,
     this.thumbnailPath,
+    this.cropCorners,
   });
 
   final String id;
@@ -34,6 +37,10 @@ class ScanPage {
 
   /// Clockwise rotation in degrees: 0, 90, 180 or 270.
   final int rotation;
+
+  /// Crop outline (normalised 0–1 to the original image) used to make
+  /// [processedPath], or null if the page was not cropped by Scanly.
+  final Quad? cropCorners;
   final PageFilter filter;
   final DateTime createdAt;
 

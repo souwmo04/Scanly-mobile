@@ -1,3 +1,4 @@
+import '../../core/vision/quad.dart';
 import '../entities/scan_document.dart';
 import '../entities/scan_page.dart';
 
@@ -19,6 +20,7 @@ class NewPage {
     required this.height,
     this.processedPath,
     this.thumbnailPath,
+    this.cropCorners,
   });
 
   final String id;
@@ -27,6 +29,7 @@ class NewPage {
   final String? thumbnailPath;
   final int width;
   final int height;
+  final Quad? cropCorners;
 }
 
 abstract interface class DocumentRepository {
