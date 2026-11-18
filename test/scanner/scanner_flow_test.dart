@@ -170,6 +170,24 @@ void main() {
 
     expect(importer.calls, isEmpty);
     expect(find.text('No documents yet'), findsOneWidget);
+    expect(find.text('Scan cancelled'), findsOneWidget);
+
+    // The snackbar offers the built-in camera (e.g. when Google's scanner
+    // module failed to download).
+    await tester.tap(find.text('Use camera'));
+    await tester.pumpAndSettle();
+    expect(find.text('No camera found'), findsOneWidget);
+  });
+
+  testWidgets('built-in camera setting skips Google scanner', (tester) async {
+    await prefs.setString('settings.scanner_engine', 'builtInCamera');
+    final scanner = FakeScanner(const ScanResult.cancelled());
+    await pumpApp(tester, scanner: scanner, importer: FakeImport(db));
+
+    await openScanner(tester);
+
+    expect(scanner.calls, 0);
+    expect(find.byTooltip('Close scanner'), findsOneWidget);
   });
 
   testWidgets('unavailable ML Kit falls back to the built-in camera', (
