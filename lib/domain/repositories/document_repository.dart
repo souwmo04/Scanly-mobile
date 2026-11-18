@@ -64,6 +64,10 @@ abstract interface class DocumentRepository {
 
   Future<ScanDocument?> getDocument(String id);
 
+  /// One document; emits again whenever it changes and `null` once it is
+  /// deleted.
+  Stream<ScanDocument?> watchDocument(String id);
+
   Future<List<ScanPage>> getPages(String documentId);
 
   /// Pages of a document in order; emits again whenever they change.

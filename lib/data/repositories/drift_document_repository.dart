@@ -63,6 +63,12 @@ class DriftDocumentRepository implements DocumentRepository {
   }
 
   @override
+  Stream<ScanDocument?> watchDocument(String id) =>
+      (_db.select(_db.documents)..where((d) => d.id.equals(id)))
+          .watchSingleOrNull()
+          .map((row) => row == null ? null : _toEntity(row));
+
+  @override
   Future<List<ScanPage>> getPages(String documentId) async {
     final rows = await _pagesQuery(documentId).get();
     return rows.map(_toPage).toList();
