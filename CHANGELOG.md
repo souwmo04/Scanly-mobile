@@ -6,6 +6,22 @@ All notable changes to Scanly are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-18 (Milestone 2: Android scanner)
+
+### Added
+- Scanning with Google ML Kit Document Scanner on Android: automatic edge detection,
+  capture, cropping, filters, multi-page (up to 100 pages per session) and gallery import.
+- Built-in camera scanner with flash, camera switching, manual capture, page counter,
+  undo and photo import. Used on iOS, when Google's scanner is unavailable, or when chosen.
+- "Import from photos" on Home: turns picked images into a document.
+- Scanner choice in Settings (Google scanner or built-in camera).
+- Import pipeline that keeps byte-identical originals, reads EXIF-aware page sizes,
+  creates thumbnails off the UI thread and rolls back cleanly on failure.
+
+### Changed
+- Release builds request only the camera permission. Plugin-added microphone, storage and
+  network permissions (used by Google telemetry) are removed.
+
 ## [0.1.0] - 2026-11-18 (Milestone 1: Foundation)
 
 ### Added
