@@ -13,11 +13,10 @@ import '../../shared/providers/core_providers.dart';
 import '../../shared/providers/library_providers.dart';
 import '../../shared/widgets/state_views.dart';
 import '../library/document_actions.dart';
+import 'pdf_actions.dart';
 
-/// Shows a document's pages with swipe navigation and pinch-to-zoom.
-///
-/// PDF rendering, sharing and printing are added in the PDF milestone; this
-/// screen displays the stored page images directly.
+/// Shows a document's pages with swipe navigation and pinch-to-zoom, and
+/// links to the PDF viewer, sharing, printing and splitting.
 class DocumentScreen extends ConsumerWidget {
   const DocumentScreen({required this.documentId, this.initialPage, super.key});
 
@@ -115,6 +114,36 @@ class _DocumentViewState extends ConsumerState<_DocumentView> {
     if (mounted) ref.invalidate(documentDetailProvider(widget.document.id));
   }
 
+  void _openPdf() {
+    _openAndRefresh(Routes.pdf(widget.document.id, page: _index + 1));
+  }
+
+  Future<void> _sharePdf() => sharePdf(
+    context,
+    ref,
+    documentId: widget.document.id,
+    title: widget.document.title,
+  );
+
+  Future<void> _printPdf() => printDocumentPdf(
+    context,
+    ref,
+    documentId: widget.document.id,
+    title: widget.document.title,
+  );
+
+  Future<void> _split() async {
+    final ids = await splitDocumentFlow(
+      context,
+      ref,
+      documentId: widget.document.id,
+      pages: widget.pages,
+    );
+    if (ids != null && mounted) {
+      ref.invalidate(documentDetailProvider(widget.document.id));
+    }
+  }
+
   void _editCurrentPage() {
     if (widget.pages.isEmpty) return;
     _openAndRefresh(
@@ -163,17 +192,37 @@ class _DocumentViewState extends ConsumerState<_DocumentView> {
           PopupMenuButton<String>(
             tooltip: 'More options',
             onSelected: (value) => switch (value) {
+              'share' => _sharePdf(),
+              'print' => _printPdf(),
+              'split' => _split(),
               'rename' => _rename(),
               'delete' => _delete(),
               _ => null,
             },
-            itemBuilder: (context) => const [
-              PopupMenuItem(value: 'rename', child: Text('Rename')),
-              PopupMenuItem(value: 'delete', child: Text('Delete')),
+            itemBuilder: (context) => [
+              if (pages.isNotEmpty) ...const [
+                PopupMenuItem(value: 'share', child: Text('Share PDF')),
+                PopupMenuItem(value: 'print', child: Text('Print')),
+              ],
+              if (pages.length > 1)
+                const PopupMenuItem(
+                  value: 'split',
+                  child: Text('Split document'),
+                ),
+              const PopupMenuItem(value: 'rename', child: Text('Rename')),
+              const PopupMenuItem(value: 'delete', child: Text('Delete')),
             ],
           ),
         ],
       ),
+      floatingActionButton: pages.isEmpty
+          ? null
+          : FloatingActionButton.extended(
+              tooltip: 'Open PDF',
+              onPressed: _openPdf,
+              icon: const Icon(Icons.picture_as_pdf_outlined),
+              label: const Text('PDF'),
+            ),
       body: pages.isEmpty
           ? const EmptyState(
               icon: Icons.insert_drive_file_outlined,
