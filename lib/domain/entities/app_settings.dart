@@ -93,3 +93,12 @@ class AppSettings {
     compression,
   );
 }
+
+/// JPEG quality used when saving processed pages.
+extension ImageCompressionQuality on ImageCompression {
+  int get jpegQuality => switch (this) {
+    ImageCompression.low => 92,
+    ImageCompression.balanced => 85,
+    ImageCompression.high => 72,
+  };
+}
