@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand navy (AppColors.navy800): adaptive icon tile. -->
+    <color name="ic_launcher_background">#162544</color>
+    <!-- Launch window background; values-night overrides it. -->
+    <color name="splash_background">#162544</color>
+</resources>
