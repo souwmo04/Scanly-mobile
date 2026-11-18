@@ -1103,6 +1103,42 @@ class $PagesTable extends Pages with TableInfo<$PagesTable, PageRow> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _brightnessMeta = const VerificationMeta(
+    'brightness',
+  );
+  @override
+  late final GeneratedColumn<double> brightness = GeneratedColumn<double>(
+    'brightness',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _contrastMeta = const VerificationMeta(
+    'contrast',
+  );
+  @override
+  late final GeneratedColumn<double> contrast = GeneratedColumn<double>(
+    'contrast',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _sharpnessMeta = const VerificationMeta(
+    'sharpness',
+  );
+  @override
+  late final GeneratedColumn<double> sharpness = GeneratedColumn<double>(
+    'sharpness',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -1127,6 +1163,9 @@ class $PagesTable extends Pages with TableInfo<$PagesTable, PageRow> {
     rotation,
     filterType,
     cropCorners,
+    brightness,
+    contrast,
+    sharpness,
     createdAt,
   ];
   @override
@@ -1228,6 +1267,24 @@ class $PagesTable extends Pages with TableInfo<$PagesTable, PageRow> {
         ),
       );
     }
+    if (data.containsKey('brightness')) {
+      context.handle(
+        _brightnessMeta,
+        brightness.isAcceptableOrUnknown(data['brightness']!, _brightnessMeta),
+      );
+    }
+    if (data.containsKey('contrast')) {
+      context.handle(
+        _contrastMeta,
+        contrast.isAcceptableOrUnknown(data['contrast']!, _contrastMeta),
+      );
+    }
+    if (data.containsKey('sharpness')) {
+      context.handle(
+        _sharpnessMeta,
+        sharpness.isAcceptableOrUnknown(data['sharpness']!, _sharpnessMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -1289,6 +1346,18 @@ class $PagesTable extends Pages with TableInfo<$PagesTable, PageRow> {
         DriftSqlType.string,
         data['${effectivePrefix}crop_corners'],
       ),
+      brightness: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}brightness'],
+      )!,
+      contrast: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}contrast'],
+      )!,
+      sharpness: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}sharpness'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -1318,6 +1387,11 @@ class PageRow extends DataClass implements Insertable<PageRow> {
   /// image (top-left, top-right, bottom-right, bottom-left). Null = no crop.
   /// Added in schema version 2.
   final String? cropCorners;
+
+  /// Editor adjustments (schema version 3).
+  final double brightness;
+  final double contrast;
+  final double sharpness;
   final DateTime createdAt;
   const PageRow({
     required this.id,
@@ -1331,6 +1405,9 @@ class PageRow extends DataClass implements Insertable<PageRow> {
     required this.rotation,
     required this.filterType,
     this.cropCorners,
+    required this.brightness,
+    required this.contrast,
+    required this.sharpness,
     required this.createdAt,
   });
   @override
@@ -1353,6 +1430,9 @@ class PageRow extends DataClass implements Insertable<PageRow> {
     if (!nullToAbsent || cropCorners != null) {
       map['crop_corners'] = Variable<String>(cropCorners);
     }
+    map['brightness'] = Variable<double>(brightness);
+    map['contrast'] = Variable<double>(contrast);
+    map['sharpness'] = Variable<double>(sharpness);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -1376,6 +1456,9 @@ class PageRow extends DataClass implements Insertable<PageRow> {
       cropCorners: cropCorners == null && nullToAbsent
           ? const Value.absent()
           : Value(cropCorners),
+      brightness: Value(brightness),
+      contrast: Value(contrast),
+      sharpness: Value(sharpness),
       createdAt: Value(createdAt),
     );
   }
@@ -1397,6 +1480,9 @@ class PageRow extends DataClass implements Insertable<PageRow> {
       rotation: serializer.fromJson<int>(json['rotation']),
       filterType: serializer.fromJson<String>(json['filterType']),
       cropCorners: serializer.fromJson<String?>(json['cropCorners']),
+      brightness: serializer.fromJson<double>(json['brightness']),
+      contrast: serializer.fromJson<double>(json['contrast']),
+      sharpness: serializer.fromJson<double>(json['sharpness']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -1415,6 +1501,9 @@ class PageRow extends DataClass implements Insertable<PageRow> {
       'rotation': serializer.toJson<int>(rotation),
       'filterType': serializer.toJson<String>(filterType),
       'cropCorners': serializer.toJson<String?>(cropCorners),
+      'brightness': serializer.toJson<double>(brightness),
+      'contrast': serializer.toJson<double>(contrast),
+      'sharpness': serializer.toJson<double>(sharpness),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -1431,6 +1520,9 @@ class PageRow extends DataClass implements Insertable<PageRow> {
     int? rotation,
     String? filterType,
     Value<String?> cropCorners = const Value.absent(),
+    double? brightness,
+    double? contrast,
+    double? sharpness,
     DateTime? createdAt,
   }) => PageRow(
     id: id ?? this.id,
@@ -1448,6 +1540,9 @@ class PageRow extends DataClass implements Insertable<PageRow> {
     rotation: rotation ?? this.rotation,
     filterType: filterType ?? this.filterType,
     cropCorners: cropCorners.present ? cropCorners.value : this.cropCorners,
+    brightness: brightness ?? this.brightness,
+    contrast: contrast ?? this.contrast,
+    sharpness: sharpness ?? this.sharpness,
     createdAt: createdAt ?? this.createdAt,
   );
   PageRow copyWithCompanion(PagesCompanion data) {
@@ -1475,6 +1570,11 @@ class PageRow extends DataClass implements Insertable<PageRow> {
       cropCorners: data.cropCorners.present
           ? data.cropCorners.value
           : this.cropCorners,
+      brightness: data.brightness.present
+          ? data.brightness.value
+          : this.brightness,
+      contrast: data.contrast.present ? data.contrast.value : this.contrast,
+      sharpness: data.sharpness.present ? data.sharpness.value : this.sharpness,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -1493,6 +1593,9 @@ class PageRow extends DataClass implements Insertable<PageRow> {
           ..write('rotation: $rotation, ')
           ..write('filterType: $filterType, ')
           ..write('cropCorners: $cropCorners, ')
+          ..write('brightness: $brightness, ')
+          ..write('contrast: $contrast, ')
+          ..write('sharpness: $sharpness, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -1511,6 +1614,9 @@ class PageRow extends DataClass implements Insertable<PageRow> {
     rotation,
     filterType,
     cropCorners,
+    brightness,
+    contrast,
+    sharpness,
     createdAt,
   );
   @override
@@ -1528,6 +1634,9 @@ class PageRow extends DataClass implements Insertable<PageRow> {
           other.rotation == this.rotation &&
           other.filterType == this.filterType &&
           other.cropCorners == this.cropCorners &&
+          other.brightness == this.brightness &&
+          other.contrast == this.contrast &&
+          other.sharpness == this.sharpness &&
           other.createdAt == this.createdAt);
 }
 
@@ -1543,6 +1652,9 @@ class PagesCompanion extends UpdateCompanion<PageRow> {
   final Value<int> rotation;
   final Value<String> filterType;
   final Value<String?> cropCorners;
+  final Value<double> brightness;
+  final Value<double> contrast;
+  final Value<double> sharpness;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
   const PagesCompanion({
@@ -1557,6 +1669,9 @@ class PagesCompanion extends UpdateCompanion<PageRow> {
     this.rotation = const Value.absent(),
     this.filterType = const Value.absent(),
     this.cropCorners = const Value.absent(),
+    this.brightness = const Value.absent(),
+    this.contrast = const Value.absent(),
+    this.sharpness = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -1572,6 +1687,9 @@ class PagesCompanion extends UpdateCompanion<PageRow> {
     this.rotation = const Value.absent(),
     this.filterType = const Value.absent(),
     this.cropCorners = const Value.absent(),
+    this.brightness = const Value.absent(),
+    this.contrast = const Value.absent(),
+    this.sharpness = const Value.absent(),
     required DateTime createdAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -1593,6 +1711,9 @@ class PagesCompanion extends UpdateCompanion<PageRow> {
     Expression<int>? rotation,
     Expression<String>? filterType,
     Expression<String>? cropCorners,
+    Expression<double>? brightness,
+    Expression<double>? contrast,
+    Expression<double>? sharpness,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
   }) {
@@ -1608,6 +1729,9 @@ class PagesCompanion extends UpdateCompanion<PageRow> {
       if (rotation != null) 'rotation': rotation,
       if (filterType != null) 'filter_type': filterType,
       if (cropCorners != null) 'crop_corners': cropCorners,
+      if (brightness != null) 'brightness': brightness,
+      if (contrast != null) 'contrast': contrast,
+      if (sharpness != null) 'sharpness': sharpness,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -1625,6 +1749,9 @@ class PagesCompanion extends UpdateCompanion<PageRow> {
     Value<int>? rotation,
     Value<String>? filterType,
     Value<String?>? cropCorners,
+    Value<double>? brightness,
+    Value<double>? contrast,
+    Value<double>? sharpness,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
   }) {
@@ -1640,6 +1767,9 @@ class PagesCompanion extends UpdateCompanion<PageRow> {
       rotation: rotation ?? this.rotation,
       filterType: filterType ?? this.filterType,
       cropCorners: cropCorners ?? this.cropCorners,
+      brightness: brightness ?? this.brightness,
+      contrast: contrast ?? this.contrast,
+      sharpness: sharpness ?? this.sharpness,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
@@ -1681,6 +1811,15 @@ class PagesCompanion extends UpdateCompanion<PageRow> {
     if (cropCorners.present) {
       map['crop_corners'] = Variable<String>(cropCorners.value);
     }
+    if (brightness.present) {
+      map['brightness'] = Variable<double>(brightness.value);
+    }
+    if (contrast.present) {
+      map['contrast'] = Variable<double>(contrast.value);
+    }
+    if (sharpness.present) {
+      map['sharpness'] = Variable<double>(sharpness.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -1704,6 +1843,9 @@ class PagesCompanion extends UpdateCompanion<PageRow> {
           ..write('rotation: $rotation, ')
           ..write('filterType: $filterType, ')
           ..write('cropCorners: $cropCorners, ')
+          ..write('brightness: $brightness, ')
+          ..write('contrast: $contrast, ')
+          ..write('sharpness: $sharpness, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -3056,6 +3198,9 @@ typedef $$PagesTableCreateCompanionBuilder = PagesCompanion Function({
   Value<int> rotation,
   Value<String> filterType,
   Value<String?> cropCorners,
+  Value<double> brightness,
+  Value<double> contrast,
+  Value<double> sharpness,
   required DateTime createdAt,
   Value<int> rowid,
 });
@@ -3071,6 +3216,9 @@ typedef $$PagesTableUpdateCompanionBuilder = PagesCompanion Function({
   Value<int> rotation,
   Value<String> filterType,
   Value<String?> cropCorners,
+  Value<double> brightness,
+  Value<double> contrast,
+  Value<double> sharpness,
   Value<DateTime> createdAt,
   Value<int> rowid,
 });
@@ -3171,6 +3319,21 @@ class $$PagesTableFilterComposer extends Composer<_$AppDatabase, $PagesTable> {
 
   ColumnFilters<String> get cropCorners => $composableBuilder(
     column: $table.cropCorners,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get brightness => $composableBuilder(
+    column: $table.brightness,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get contrast => $composableBuilder(
+    column: $table.contrast,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get sharpness => $composableBuilder(
+    column: $table.sharpness,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3287,6 +3450,21 @@ class $$PagesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get brightness => $composableBuilder(
+    column: $table.brightness,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get contrast => $composableBuilder(
+    column: $table.contrast,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get sharpness => $composableBuilder(
+    column: $table.sharpness,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -3364,6 +3542,17 @@ class $$PagesTableAnnotationComposer
     column: $table.cropCorners,
     builder: (column) => column,
   );
+
+  GeneratedColumn<double> get brightness => $composableBuilder(
+    column: $table.brightness,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get contrast =>
+      $composableBuilder(column: $table.contrast, builder: (column) => column);
+
+  GeneratedColumn<double> get sharpness =>
+      $composableBuilder(column: $table.sharpness, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -3456,6 +3645,9 @@ class $$PagesTableTableManager
                 Value<int> rotation = const Value.absent(),
                 Value<String> filterType = const Value.absent(),
                 Value<String?> cropCorners = const Value.absent(),
+                Value<double> brightness = const Value.absent(),
+                Value<double> contrast = const Value.absent(),
+                Value<double> sharpness = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => PagesCompanion(
@@ -3470,6 +3662,9 @@ class $$PagesTableTableManager
                 rotation: rotation,
                 filterType: filterType,
                 cropCorners: cropCorners,
+                brightness: brightness,
+                contrast: contrast,
+                sharpness: sharpness,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -3486,6 +3681,9 @@ class $$PagesTableTableManager
                 Value<int> rotation = const Value.absent(),
                 Value<String> filterType = const Value.absent(),
                 Value<String?> cropCorners = const Value.absent(),
+                Value<double> brightness = const Value.absent(),
+                Value<double> contrast = const Value.absent(),
+                Value<double> sharpness = const Value.absent(),
                 required DateTime createdAt,
                 Value<int> rowid = const Value.absent(),
               }) => PagesCompanion.insert(
@@ -3500,6 +3698,9 @@ class $$PagesTableTableManager
                 rotation: rotation,
                 filterType: filterType,
                 cropCorners: cropCorners,
+                brightness: brightness,
+                contrast: contrast,
+                sharpness: sharpness,
                 createdAt: createdAt,
                 rowid: rowid,
               ),

@@ -18,6 +18,9 @@ class ScanPage {
     this.processedPath,
     this.thumbnailPath,
     this.cropCorners,
+    this.brightness = 0,
+    this.contrast = 0,
+    this.sharpness = 0,
   });
 
   final String id;
@@ -42,6 +45,11 @@ class ScanPage {
   /// [processedPath], or null if the page was not cropped by Scanly.
   final Quad? cropCorners;
   final PageFilter filter;
+
+  /// Adjustments, −1…1 for brightness and contrast, 0…1 for sharpness.
+  final double brightness;
+  final double contrast;
+  final double sharpness;
   final DateTime createdAt;
 
   /// The best image to display: processed if available, otherwise original.

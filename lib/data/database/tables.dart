@@ -57,6 +57,11 @@ class Pages extends Table {
   /// image (top-left, top-right, bottom-right, bottom-left). Null = no crop.
   /// Added in schema version 2.
   TextColumn get cropCorners => text().nullable()();
+
+  /// Editor adjustments (schema version 3).
+  RealColumn get brightness => real().withDefault(const Constant(0))();
+  RealColumn get contrast => real().withDefault(const Constant(0))();
+  RealColumn get sharpness => real().withDefault(const Constant(0))();
   DateTimeColumn get createdAt => dateTime()();
 
   @override

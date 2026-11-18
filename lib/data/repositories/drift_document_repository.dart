@@ -221,6 +221,9 @@ class DriftDocumentRepository implements DocumentRepository {
     filter:
         PageFilter.values.asNameMap()[row.filterType] ?? PageFilter.original,
     cropCorners: _parseCorners(row.cropCorners),
+    brightness: row.brightness,
+    contrast: row.contrast,
+    sharpness: row.sharpness,
     createdAt: row.createdAt,
   );
 
