@@ -6,6 +6,10 @@
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Scanly uses the camera to scan documents. Images stay on your device.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Scanly needs access to your photos only when you choose to import an image to scan.</string>
 	<key>CFBundleDisplayName</key>
 	<string>Scanly</string>
 	<key>CFBundleExecutable</key>
@@ -15,7 +19,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>scanly</string>
+	<string>Scanly</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
