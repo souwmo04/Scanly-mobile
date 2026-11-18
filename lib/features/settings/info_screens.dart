@@ -77,7 +77,7 @@ class PrivacyScreen extends StatelessWidget {
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
 
-  static const version = '0.2.0';
+  static const version = '0.3.0';
 
   @override
   Widget build(BuildContext context) {
