@@ -1,3 +1,5 @@
+import 'dart:ui' show Rect;
+
 import '../entities/app_settings.dart';
 
 /// How a document is laid out when written as a PDF.
@@ -74,7 +76,9 @@ abstract interface class DocumentPdfService {
 /// System share sheet and print dialog.
 abstract interface class ShareService {
   /// Opens the share sheet for [paths] (e.g. save to Files, send by email).
-  Future<void> shareFiles(List<String> paths, {String? subject});
+  /// [origin] is the on-screen area (global coordinates) the share started
+  /// from; iPad needs it to anchor the share popover.
+  Future<void> shareFiles(List<String> paths, {String? subject, Rect? origin});
 
   /// Opens the system print dialog for the PDF at [path].
   Future<void> printPdf(String path, {required String jobName});
