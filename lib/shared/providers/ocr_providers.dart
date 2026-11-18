@@ -1,17 +1,24 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/repositories/drift_ocr_repository.dart';
+import '../../data/services/ocr/device_ocr_engine.dart';
+import '../../data/services/ocr/mlkit_latin_recognizer.dart';
+import '../../data/services/ocr/tesseract_plugin_runner.dart';
 import '../../domain/repositories/ocr_repository.dart';
 import '../../domain/services/ocr_engine.dart';
-
-// Milestone 6 in progress: the engine and storage implementations replace
-// these bodies.
+import 'core_providers.dart';
+import 'scanner_providers.dart';
 
 /// On-device text recognition (ML Kit + Tesseract).
 final ocrEngineProvider = Provider<OcrEngine>(
-  (ref) => throw UnimplementedError('OCR engine not wired yet'),
+  (ref) => DeviceOcrEngine(
+    latin: const MlKitLatinRecognizer(),
+    tesseract: const TesseractPluginRunner(),
+    readSize: ref.watch(imageServiceProvider).readSize,
+  ),
 );
 
 /// OCR results storage and search indexing.
 final ocrRepositoryProvider = Provider<OcrRepository>(
-  (ref) => throw UnimplementedError('OCR repository not wired yet'),
+  (ref) => DriftOcrRepository(ref.watch(appDatabaseProvider)),
 );
