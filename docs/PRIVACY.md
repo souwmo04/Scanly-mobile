@@ -27,7 +27,10 @@ on-device. Scanly never uploads your document images or text to any server.
 | Photos / files | Only when you choose to import an image or PDF. |
 
 On Android, Google ML Kit's document scanner and text recognizer are provided through Google
-Play services and run on the device. Google's own terms govern Play services.
+Play services and run on the device. Google's own terms govern Play services. The first time
+you scan, Play services may download the scanner module itself.
+
+
 
 ## Sharing
 
