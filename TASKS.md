@@ -93,14 +93,18 @@ Legend: `[x]` done · `[ ]` to do · `[~]` in progress · `[!]` needs macOS / a 
 - [x] Release APK builds (61.5 MB), CAMERA permission only
 - [!] Check crop handles, magnifier and drag-to-reorder by hand on a physical phone
 
-## Milestone 5: PDF
+## Milestone 5: PDF ✅ (built with two parallel agents, reviewed and integrated)
 
-- [ ] PDF generation (`pdf`): A4, A5, Letter, Legal, original size; portrait/landscape
-- [ ] Image compression levels
-- [ ] Viewer (`pdfrx`): page navigation, zoom, text search
-- [ ] Share (`share_plus`) and print (`printing`)
-- [ ] Merge and split
-- [ ] Rename and delete from the viewer
+- [x] PDF generation (`pdf` 3.13): A4, A5, Letter, Legal, original size (150 dpi); portrait, landscape or auto per page
+- [x] Compression: pages downscaled to ~200 dpi on the page and re-encoded at Low/Balanced/High quality, one page at a time
+- [x] Cached `document.pdf` per document with a fingerprint sidecar; regenerated only when pages, edits or options change
+- [x] Viewer: lazily rasterized pages (`printing` → Android PdfRenderer / iOS PDFKit), Page x of n, previous/next, go to page, pinch zoom, file size. **Deviation:** `pdfrx` was dropped because its PDFium hook needs a host C compiler (same reason as OpenCV). Text search inside documents arrives with OCR in Milestone 6
+- [x] Export options sheet (size, orientation, compression, prefilled from Settings), then the share sheet (save to Files/Drive, email…)
+- [x] Share (`share_plus` 13, with an iPad popover anchor) and print (`printing` 5.15)
+- [x] Merge selected documents (in display order, into the first document's folder) and split a document at chosen pages; sources are kept and copies keep their edits
+- [x] Rename and delete remain in the document viewer menu
+- [x] Tests: engine (19), UI (14). 184 total passing; release APK 62.3 MB, CAMERA permission only
+- [!] Check the PDF viewer, share sheet and print dialog on a physical phone
 
 ## Milestone 6: OCR
 
