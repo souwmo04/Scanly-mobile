@@ -1,9 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/services/pdf_builder.dart';
+import '../../data/services/pdf_document_service.dart';
 import '../../domain/services/pdf_service.dart';
+import 'core_providers.dart';
+import 'scanner_providers.dart';
 
 /// PDF creation, merge and split.
-// The PDF engine implementation replaces this body (Milestone 5 in progress).
 final documentPdfServiceProvider = Provider<DocumentPdfService>(
-  (ref) => throw UnimplementedError('PdfDocumentService not wired yet'),
+  (ref) => PdfDocumentService(
+    documents: ref.watch(documentRepositoryProvider),
+    storage: ref.watch(storageServiceProvider),
+    settings: ref.watch(settingsRepositoryProvider),
+    builder: PdfBuilder(images: ref.watch(imageServiceProvider)),
+  ),
 );
