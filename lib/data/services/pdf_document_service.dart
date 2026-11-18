@@ -6,9 +6,11 @@ import 'package:path/path.dart' as p;
 import '../../core/errors/app_exception.dart';
 import '../../core/services/pdf_builder.dart';
 import '../../core/services/storage_service.dart';
+import '../../domain/entities/ocr_result.dart';
 import '../../domain/entities/page_edits.dart';
 import '../../domain/entities/scan_page.dart';
 import '../../domain/repositories/document_repository.dart';
+import '../../domain/repositories/ocr_repository.dart';
 import '../../domain/repositories/settings_repository.dart';
 import '../../domain/services/pdf_service.dart';
 
@@ -23,7 +25,10 @@ import '../../domain/services/pdf_service.dart';
 /// `updatedAt`, and the sidecar matches the current options and fingerprint.
 /// The fingerprint catches edits that fall within the same second as the
 /// last write, which `updatedAt` alone (stored at one-second precision)
-/// would miss. The sidecar is deleted before a new PDF is written and
+/// would miss. The sidecar also records every page's OCR state (the
+/// `updatedAt` and content of finished results), so the PDF is rebuilt with
+/// its searchable text layer once OCR finishes or changes. Only
+/// [OcrStatus.done] results are drawn. The sidecar is deleted before a new PDF is written and
 /// written last, so an interrupted export never leaves a matching sidecar
 /// next to a PDF made with other settings.
 ///
@@ -36,15 +41,18 @@ class PdfDocumentService implements DocumentPdfService {
     required this._documents,
     required this._storage,
     required this._settings,
+    required this._ocr,
     this._builder = const PdfBuilder(),
   });
 
   final DocumentRepository _documents;
   final StorageService _storage;
   final SettingsRepository _settings;
+  final OcrRepository _ocr;
   final PdfBuilder _builder;
 
-  static const _cacheVersion = 1;
+  /// Version 2 added the OCR state; older sidecars never match.
+  static const _cacheVersion = 2;
 
   /// Path of the cache sidecar for [documentId]'s PDF.
   String metaPath(String documentId) => '${_storage.pdfPath(documentId)}.meta';
@@ -66,6 +74,18 @@ class PdfDocumentService implements DocumentPdfService {
     }
     final effective =
         options ?? PdfExportOptions.fromSettings(_settings.load());
+    final texts = <PdfPageText?>[];
+    final ocrKeys = StringBuffer();
+    for (final page in pages) {
+      final ocr = await _doneOcr(page.id);
+      final text = PdfPageText.fromOcr(ocr);
+      texts.add(text);
+      ocrKeys
+        ..write(page.id)
+        ..write('|')
+        ..write(text == null ? '-' : _ocrKey(ocr!))
+        ..write('\n');
+    }
     final pdfPath = _storage.pdfPath(documentId);
     final meta = metaPath(documentId);
     final expected = jsonEncode({
@@ -73,6 +93,7 @@ class PdfDocumentService implements DocumentPdfService {
       'options': _optionsKey(effective),
       'updatedAt': document.updatedAt.microsecondsSinceEpoch,
       'pages': _fingerprint(pages),
+      'ocr': _fnv1a(ocrKeys.toString()),
     });
 
     if (!force && _isCacheValid(pdfPath, meta, expected, document.updatedAt)) {
@@ -89,11 +110,39 @@ class PdfDocumentService implements DocumentPdfService {
       options: effective,
       title: document.title,
       onProgress: onProgress,
+      pageTexts: texts,
     );
     await _storage.writeBytes(pdfPath, bytes);
     await _storage.writeBytes(meta, utf8.encode(expected));
     await _documents.setPdfPath(documentId, pdfPath);
     return pdfPath;
+  }
+
+  /// The page's finished OCR, or null. A failing lookup exports the page
+  /// without text rather than failing the export.
+  Future<PageOcr?> _doneOcr(String pageId) async {
+    try {
+      final ocr = await _ocr.getForPage(pageId);
+      return ocr != null && ocr.status == OcrStatus.done ? ocr : null;
+    } on Object {
+      return null;
+    }
+  }
+
+  /// Identity of a finished OCR result: when it was stored and its content.
+  static String _ocrKey(PageOcr ocr) {
+    final buffer = StringBuffer()
+      ..write(ocr.updatedAt.microsecondsSinceEpoch)
+      ..write('|')
+      ..write(ocr.text);
+    for (final line in ocr.lines) {
+      buffer
+        ..write('\n')
+        ..write(line.text)
+        ..write('@')
+        ..write(line.box?.toList().join(',') ?? '');
+    }
+    return _fnv1a(buffer.toString());
   }
 
   bool _isCacheValid(
