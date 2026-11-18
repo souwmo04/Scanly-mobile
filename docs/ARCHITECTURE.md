@@ -7,7 +7,7 @@ presentation (features/*)  →  domain (entities, repository interfaces, use cas
                                    ↑
                     data (Drift database, file storage, repository implementations)
                                    ↑
-          platform services (scanner, OpenCV, ML Kit, Tesseract, PDF, share/print)
+          platform services (ML Kit scanner, vision pipeline, Tesseract, PDF, share/print)
 ```
 
 - **Presentation**: widgets and Riverpod providers. No direct I/O.
@@ -35,18 +35,50 @@ test/         unit, widget, integration, scanner, ocr, pdf
 
 | Platform | First choice | Fallback |
 | --- | --- | --- |
-| Android | ML Kit Document Scanner (Play services UI, returns JPEGs and a PDF) | Custom camera + OpenCV pipeline |
-| iOS | Custom camera + OpenCV pipeline | Manual capture + manual crop |
+| Android | ML Kit Document Scanner (Play services UI, returns cropped JPEGs) | Built-in camera + Scanly vision pipeline |
+| iOS | Built-in camera + Scanly vision pipeline | Manual capture (manual crop in the editor) |
 
-Both feed the same `ScannedPage` model, so editing, OCR, PDF, and the library don't care
-which scanner was used.
+Both feed the same `PageSource` → `ImportPagesUseCase` path, so editing, OCR, PDF and the
+library don't care which scanner was used. Users can also choose the built-in camera on
+Android in Settings.
 
-### OpenCV pipeline
+### Vision pipeline (`lib/core/vision/`)
 
-downscale (~640 px long edge) → grayscale → Gaussian blur → Canny → contours →
-approxPolyDP → 4-point candidates → validation (convex, angles 45–135°, area ≥ 20% of the
-frame, plausible aspect ratio) → temporal stability (corners move < 2% over N frames) →
-full-resolution capture → `warpPerspective` in a background isolate.
+The edge-detection pipeline follows the classic OpenCV approach, implemented in pure Dart:
+
+1. **Frame**: the camera stream (YUV420 on Android, BGRA on iOS) is subsampled to about
+   480 px inside the camera callback. Full-resolution frames are never processed.
+2. **Rotate** to upright by `sensorOrientation`, then **downscale** to 320 px (area average).
+3. **Gaussian blur** (5×5, separable integer kernel).
+4. **Canny**: Sobel gradients, non-maximum suppression, hysteresis. Thresholds adapt to
+   each frame (percentile of gradient magnitudes), which matters for white-on-white scenes.
+5. **Dilate** (3×3) to close gaps in the outline.
+6. **Contours**: 8-connected edge components → convex hull → Douglas–Peucker with growing
+   tolerance until 4 corners remain.
+7. **Validate**: convex; corner angles 45–135°; area 12–98.5 % of the frame; aspect ratio
+   ≤ 4.5; no very short sides; **edge support** ≥ 55 % (share of the outline backed by real
+   edges). The best candidate is chosen by area × support.
+8. **Stability**: auto-capture fires after 6 consecutive detections whose corners move
+   less than 2 % of the frame diagonal, then waits 1.5 s before the next one.
+9. **Still photo**: after capture, detection runs again on a 720 px copy of the real photo
+   (EXIF rotation applied by the platform codec). The page is then flattened at full
+   resolution by drawing it through the solved homography with Flutter's renderer (GPU on
+   devices) and JPEG-encoded in a background isolate. Corners are stored on the page
+   (`pages.crop_corners`) for the editor.
+
+Each step runs in a background isolate. A 1280×720 frame is analysed in well under
+250 ms even in debug mode; the live loop is throttled to one frame per 150 ms.
+
+#### Why not OpenCV?
+
+The original plan used `opencv_dart`. Its build hook compiles a native wrapper with
+CMake for every target, including the host machine for `flutter test`. That needs a recent
+CMake plus a C++ toolchain (Visual Studio on Windows, Xcode on macOS), and adds about
+20–40 MB of native code per ABI. For the handful of operations a scanner needs on a
+320 px frame, pure Dart is fast enough, behaves identically on Android and iOS, is fully
+unit-tested on any machine, and keeps the app small. The perspective warp, the only
+full-resolution step, uses the GPU through Flutter's own renderer. If heavier vision work
+is needed later (e.g. shadow removal), OpenCV can be added behind the same interfaces.
 
 ## Storage
 
@@ -80,8 +112,10 @@ after the commit succeeds.
 
 | Risk | Mitigation |
 | --- | --- |
-| ML Kit Document Scanner is Android-only and needs Play services | Abstraction plus a custom OpenCV fallback |
-| `opencv_dart` adds a large native binary (~20–40 MB per ABI) | Split APKs per ABI; AAB handles this on Play |
+| ML Kit Document Scanner is Android-only and needs Play services | Abstraction, a built-in camera fallback, a "Use camera" action after a cancelled scan, and a Settings choice |
+| Google's scanner module may fail to download on first use (seen on an emulator) | Same fallbacks as above |
+| ML Kit pulls in Google telemetry (`datatransport`) | Release manifest removes INTERNET and ACCESS_NETWORK_STATE |
+| Camera stream orientation on iOS is assumed to match `sensorOrientation` | Covered by Android tests; needs checking on a physical iPhone |
 | Tesseract Flutter plugins are thinly maintained | Pin a version, wrap it behind `OcrEngine`, keep the option of a platform-channel replacement |
 | Bengali shaping in PDF text layers | Embed Noto Sans Bengali; the visible layer is the image, the invisible text is only for search |
 | iOS can't be built or tested from Windows | Keep all logic in shared Dart; document the steps that need a Mac |
