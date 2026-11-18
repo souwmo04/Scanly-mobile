@@ -75,14 +75,23 @@ Legend: `[x]` done · `[ ]` to do · `[~]` in progress · `[!]` needs macOS / a 
 - [!] Test live detection and auto-capture on a physical Android phone (the emulator was in use by another app)
 - [!] Test on a physical iPhone (needs macOS and Xcode); confirm stream orientation matches `sensorOrientation`
 
-## Milestone 4: Editor
+## Milestone 4: Editor ✅
 
-- [ ] Four-corner crop handles with a magnifier
-- [ ] Rotate, reset crop, retake
-- [ ] Filters: original, grayscale, black and white, enhanced, color document
-- [ ] Brightness, contrast, and sharpness controls
-- [ ] Undo/redo stack (the original image is never touched)
-- [ ] Page organizer: grid, drag-to-reorder, add, delete, rotate, edit
+- [x] Four-corner crop handles with a magnifier; red outline and blocked save when corners cross
+- [x] Crop shown in the page's rotation; Auto detect, Full page, Reset all
+- [x] Rotate left/right (editor) and quick rotate (organizer)
+- [x] Retake a page (camera or Google scanner, 1 page); keeps its position, resets edits and stale OCR text
+- [x] Filters: original, grayscale, black & white (Bradley adaptive threshold, shadow-tolerant), enhanced, color document
+- [x] Brightness, contrast and sharpness sliders (one undo step per drag)
+- [x] Undo/redo history; the original image is never touched, every save re-renders from it
+- [x] Debounced live preview rendered with the same pipeline as the saved page
+- [x] Page organizer: grid, long-press drag to reorder, add pages (scan and append), delete (not the last page), rotate, edit, retake
+- [x] Search hit page numbers follow reorders and deletions
+- [x] Edit settings stored per page (schema v3: brightness, contrast, sharpness) with a verified migration
+- [x] Fixed: a failed page import could leave its copied original behind (found by tests)
+- [x] Tests: filters and history (20), renderer (6), edit/append/retake use cases (7), page operations (9), editor and organizer UI (8). 150 total passing
+- [x] Release APK builds (61.5 MB), CAMERA permission only
+- [!] Check crop handles, magnifier and drag-to-reorder by hand on a physical phone
 
 ## Milestone 5: PDF
 
