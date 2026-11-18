@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:camera/camera.dart';
@@ -11,6 +12,7 @@ import '../../domain/entities/app_settings.dart';
 import '../../shared/providers/scanner_providers.dart';
 import '../../shared/widgets/dialogs.dart';
 import '../settings/settings_controller.dart';
+import 'live_detection.dart';
 
 /// A page captured or picked in the camera screen.
 class CapturedPage {
@@ -67,6 +69,17 @@ class _CameraCaptureViewState extends ConsumerState<CameraCaptureView>
   bool _shutterFlash = false;
   final List<CapturedPage> _pages = [];
 
+  /// Live edge detection; null for front cameras or when streaming is
+  /// unsupported (manual capture still works).
+  LiveDetectionController? _live;
+
+  /// Capture automatically once the document holds steady.
+  bool _autoCapture = true;
+
+  /// After a capture, wait before auto-capturing again so the user can
+  /// swap the page.
+  DateTime _cooldownUntil = DateTime.fromMillisecondsSinceEpoch(0);
+
   @override
   void initState() {
     super.initState();
@@ -77,6 +90,7 @@ class _CameraCaptureViewState extends ConsumerState<CameraCaptureView>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _disposeLive();
     _controller?.dispose();
     super.dispose();
   }
@@ -87,6 +101,7 @@ class _CameraCaptureViewState extends ConsumerState<CameraCaptureView>
     // Release the camera in the background so other apps can use it.
     if (state == AppLifecycleState.inactive) {
       if (controller != null && controller.value.isInitialized) {
+        _disposeLive();
         _controller = null;
         controller.dispose();
         if (mounted) setState(() => _initializing = true);
@@ -130,7 +145,10 @@ class _CameraCaptureViewState extends ConsumerState<CameraCaptureView>
         _cameras[_cameraIndex],
         _preset,
         enableAudio: false,
-        imageFormatGroup: ImageFormatGroup.jpeg,
+        // Stream format for live edge detection; photos are still JPEG.
+        imageFormatGroup: Platform.isIOS
+            ? ImageFormatGroup.bgra8888
+            : ImageFormatGroup.yuv420,
       );
       await controller.initialize();
       await controller.lockCaptureOrientation(DeviceOrientation.portraitUp);
@@ -148,6 +166,7 @@ class _CameraCaptureViewState extends ConsumerState<CameraCaptureView>
         _controller = controller;
         _initializing = false;
       });
+      _startLive(controller);
     } on CameraException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -169,9 +188,51 @@ class _CameraCaptureViewState extends ConsumerState<CameraCaptureView>
     }
   }
 
+  void _startLive(CameraController controller) {
+    final description = controller.description;
+    // The front preview is mirrored; document scanning uses the back camera.
+    if (description.lensDirection == CameraLensDirection.front) return;
+    final live = LiveDetectionController(
+      sensorOrientation: description.sensorOrientation,
+    )..addListener(_onLiveUpdate);
+    _live = live;
+    unawaited(
+      controller.startImageStream(live.onFrame).catchError((Object _) {
+        // Streaming unsupported on this device: manual capture only.
+        _disposeLive();
+        if (mounted) setState(() {});
+      }),
+    );
+  }
+
+  void _disposeLive() {
+    final controller = _controller;
+    if (controller != null && controller.value.isStreamingImages) {
+      unawaited(controller.stopImageStream().catchError((Object _) {}));
+    }
+    _live
+      ?..removeListener(_onLiveUpdate)
+      ..dispose();
+    _live = null;
+  }
+
+  void _onLiveUpdate() {
+    if (!mounted) return;
+    setState(() {});
+    final live = _live;
+    if (_autoCapture &&
+        live != null &&
+        live.isStable &&
+        !_capturing &&
+        DateTime.now().isAfter(_cooldownUntil)) {
+      _capture();
+    }
+  }
+
   Future<void> _switchCamera() async {
     if (_cameras.length < 2) return;
     final old = _controller;
+    _disposeLive();
     setState(() {
       _controller = null;
       _cameraIndex = (_cameraIndex + 1) % _cameras.length;
@@ -202,7 +263,12 @@ class _CameraCaptureViewState extends ConsumerState<CameraCaptureView>
       return;
     }
     setState(() => _capturing = true);
+    // Pause frame analysis while the full-resolution photo is taken; some
+    // devices can't stream and capture at the same time.
+    final live = _live;
+    final wasStreaming = controller.value.isStreamingImages;
     try {
+      if (wasStreaming) await controller.stopImageStream();
       await HapticFeedback.lightImpact();
       final file = await controller.takePicture();
       if (!mounted) return;
@@ -215,8 +281,33 @@ class _CameraCaptureViewState extends ConsumerState<CameraCaptureView>
     } on CameraException {
       if (mounted) showMessage(context, 'Could not take the photo. Try again.');
     } finally {
+      _cooldownUntil = DateTime.now().add(const Duration(milliseconds: 1500));
+      live?.reset();
+      if (wasStreaming &&
+          live != null &&
+          mounted &&
+          identical(_controller, controller) &&
+          identical(_live, live)) {
+        try {
+          await controller.startImageStream(live.onFrame);
+        } on CameraException {
+          _disposeLive();
+        }
+      }
       if (mounted) setState(() => _capturing = false);
     }
+  }
+
+  /// Guidance shown above the shutter.
+  String? get _hintText {
+    if (_controller == null) return null;
+    final live = _live;
+    if (live == null) {
+      return _pages.isEmpty ? 'Fit the document inside the frame' : null;
+    }
+    if (live.quad == null) return 'Looking for a document…';
+    if (_autoCapture) return 'Hold steady…';
+    return 'Document found. Tap to capture';
   }
 
   Future<void> _pickFromGallery() async {
@@ -280,7 +371,7 @@ class _CameraCaptureViewState extends ConsumerState<CameraCaptureView>
           fit: StackFit.expand,
           children: [
             _buildPreview(),
-            if (_controller != null) const _FrameGuide(),
+            if (_controller != null && _live?.quad == null) const _FrameGuide(),
             AnimatedOpacity(
               opacity: _shutterFlash ? 0.6 : 0,
               duration: const Duration(milliseconds: 80),
@@ -296,13 +387,17 @@ class _CameraCaptureViewState extends ConsumerState<CameraCaptureView>
                     flash: _flash,
                     canSwitch: _cameras.length > 1 && _controller != null,
                     hasCamera: _controller != null,
+                    autoCapture: _live == null ? null : _autoCapture,
                     onClose: _close,
                     onFlash: _cycleFlash,
                     onSwitch: _switchCamera,
+                    onToggleAuto: () {
+                      setState(() => _autoCapture = !_autoCapture);
+                      _live?.reset();
+                    },
                   ),
                   const Spacer(),
-                  if (_controller != null && _pages.isEmpty)
-                    const _Hint('Fit the document inside the frame'),
+                  if (_hintText case final hint?) _Hint(hint),
                   _BottomBar(
                     pages: _pages,
                     capturing: _capturing,
@@ -345,7 +440,22 @@ class _CameraCaptureViewState extends ConsumerState<CameraCaptureView>
           child: SizedBox(
             width: previewSize.height,
             height: previewSize.width,
-            child: CameraPreview(controller),
+            // The outline is painted inside the same box as the preview, so
+            // the cover-crop transform applies to both identically.
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                CameraPreview(controller),
+                if (_live case final live?)
+                  CustomPaint(
+                    painter: DocumentOutlinePainter(
+                      quad: live.quad,
+                      stability: _autoCapture ? live.stability : 0,
+                      color: AppColors.amber,
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -359,18 +469,24 @@ class _TopBar extends StatelessWidget {
     required this.flash,
     required this.canSwitch,
     required this.hasCamera,
+    required this.autoCapture,
     required this.onClose,
     required this.onFlash,
     required this.onSwitch,
+    required this.onToggleAuto,
   });
 
   final int pageCount;
   final FlashMode flash;
   final bool canSwitch;
   final bool hasCamera;
+
+  /// Auto-capture state, or null when live detection is unavailable.
+  final bool? autoCapture;
   final VoidCallback onClose;
   final VoidCallback onFlash;
   final VoidCallback onSwitch;
+  final VoidCallback onToggleAuto;
 
   @override
   Widget build(BuildContext context) {
@@ -414,6 +530,10 @@ class _TopBar extends StatelessWidget {
               ),
             ),
           const Spacer(),
+          if (autoCapture case final auto?) ...[
+            _AutoToggle(enabled: auto, onPressed: onToggleAuto),
+            const SizedBox(width: AppSpacing.xs),
+          ],
           if (hasCamera)
             _RoundIconButton(
               icon: flashIcon,
@@ -608,6 +728,48 @@ class _DoneButton extends StatelessWidget {
           child: Text('Done ($count)'),
         ),
       ],
+    );
+  }
+}
+
+/// "Auto" / "Manual" capture switch.
+class _AutoToggle extends StatelessWidget {
+  const _AutoToggle({required this.enabled, required this.onPressed});
+
+  final bool enabled;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = enabled ? 'Auto' : 'Manual';
+    return Semantics(
+      button: true,
+      toggled: enabled,
+      label: 'Automatic capture',
+      excludeSemantics: true,
+      child: Material(
+        color: enabled ? AppColors.amber : Colors.black.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          onTap: onPressed,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 44, minWidth: 72),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+              child: Center(
+                child: Text(
+                  label,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: enabled ? AppColors.navy950 : Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
