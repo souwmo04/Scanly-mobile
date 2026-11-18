@@ -64,13 +64,217 @@ class DriftDocumentRepository implements DocumentRepository {
 
   @override
   Future<List<ScanPage>> getPages(String documentId) async {
-    final rows =
-        await (_db.select(_db.pages)
-              ..where((pg) => pg.documentId.equals(documentId))
-              ..orderBy([(pg) => OrderingTerm.asc(pg.pageOrder)]))
-            .get();
+    final rows = await _pagesQuery(documentId).get();
     return rows.map(_toPage).toList();
   }
+
+  SimpleSelectStatement<$PagesTable, PageRow> _pagesQuery(String documentId) =>
+      _db.select(_db.pages)
+        ..where((pg) => pg.documentId.equals(documentId))
+        ..orderBy([(pg) => OrderingTerm.asc(pg.pageOrder)]);
+
+  @override
+  Stream<List<ScanPage>> watchPages(String documentId) =>
+      _pagesQuery(documentId).watch().map((rows) => rows.map(_toPage).toList());
+
+  @override
+  Future<ScanPage?> getPage(String pageId) async {
+    final row = await (_db.select(
+      _db.pages,
+    )..where((pg) => pg.id.equals(pageId))).getSingleOrNull();
+    return row == null ? null : _toPage(row);
+  }
+
+  Future<PageRow> _requirePage(String pageId) async {
+    final row = await (_db.select(
+      _db.pages,
+    )..where((pg) => pg.id.equals(pageId))).getSingleOrNull();
+    if (row == null) throw const NotFoundException('Page not found.');
+    return row;
+  }
+
+  @override
+  Future<void> updatePage(String pageId, PageUpdate update) async {
+    final e = update.edits;
+    await _db.transaction(() async {
+      final row = await _requirePage(pageId);
+      await (_db.update(_db.pages)..where((pg) => pg.id.equals(pageId))).write(
+        PagesCompanion(
+          processedPath: Value(update.processedPath),
+          thumbnailPath: Value(update.thumbnailPath),
+          width: Value(update.width),
+          height: Value(update.height),
+          cropCorners: Value(
+            e.isFullFrame ? null : jsonEncode(e.corners.toList()),
+          ),
+          rotation: Value(e.rotation),
+          filterType: Value(e.filter.name),
+          brightness: Value(e.brightness),
+          contrast: Value(e.contrast),
+          sharpness: Value(e.sharpness),
+        ),
+      );
+      await _refreshDocument(row.documentId);
+    });
+  }
+
+  @override
+  Future<void> addPages(String documentId, List<NewPage> pages) async {
+    if (pages.isEmpty) return;
+    final now = _clock();
+    await _db.transaction(() async {
+      if (await getDocument(documentId) == null) {
+        throw const NotFoundException('Document not found.');
+      }
+      final existing = await getPages(documentId);
+      for (var i = 0; i < pages.length; i++) {
+        await _db
+            .into(_db.pages)
+            .insert(
+              _pageCompanion(pages[i], documentId, existing.length + i, now),
+            );
+      }
+      await _refreshDocument(documentId);
+    });
+  }
+
+  @override
+  Future<ScanPage> replacePage(String pageId, NewPage replacement) async {
+    late PageRow old;
+    await _db.transaction(() async {
+      old = await _requirePage(pageId);
+      await (_db.update(_db.pages)..where((pg) => pg.id.equals(pageId))).write(
+        PagesCompanion(
+          originalPath: Value(replacement.originalPath),
+          processedPath: Value(replacement.processedPath),
+          thumbnailPath: Value(replacement.thumbnailPath),
+          width: Value(replacement.width),
+          height: Value(replacement.height),
+          cropCorners: Value(
+            replacement.cropCorners == null
+                ? null
+                : jsonEncode(replacement.cropCorners!.toList()),
+          ),
+          rotation: const Value(0),
+          filterType: Value(PageFilter.original.name),
+          brightness: const Value(0),
+          contrast: const Value(0),
+          sharpness: const Value(0),
+        ),
+      );
+      // The old text belongs to the old image.
+      await (_db.delete(
+        _db.pageOcr,
+      )..where((o) => o.pageId.equals(pageId))).go();
+      await _db.indexPageText(
+        documentId: old.documentId,
+        pageId: pageId,
+        pageNumber: old.pageOrder + 1,
+        text: '',
+      );
+      await _refreshDocument(old.documentId);
+    });
+    return _toPage(old);
+  }
+
+  @override
+  Future<void> deletePage(String pageId) async {
+    late PageRow row;
+    await _db.transaction(() async {
+      row = await _requirePage(pageId);
+      final siblings = await getPages(row.documentId);
+      if (siblings.length <= 1) {
+        throw const ValidationException(
+          'A document needs at least one page. Delete the document instead.',
+        );
+      }
+      await _db.indexPageText(
+        documentId: row.documentId,
+        pageId: pageId,
+        pageNumber: 0,
+        text: '',
+      );
+      await (_db.delete(_db.pages)..where((pg) => pg.id.equals(pageId))).go();
+      await _writeOrder(
+        row.documentId,
+        siblings.where((s) => s.id != pageId).map((s) => s.id).toList(),
+      );
+      await _refreshDocument(row.documentId);
+    });
+    for (final path in [
+      row.originalPath,
+      row.processedPath,
+      row.thumbnailPath,
+    ]) {
+      if (path != null) await _storage.deleteFile(path);
+    }
+    await _refreshSize(row.documentId);
+  }
+
+  @override
+  Future<void> reorderPages(String documentId, List<String> pageIds) async {
+    await _db.transaction(() async {
+      final current = (await getPages(documentId)).map((p) => p.id).toSet();
+      if (current.length != pageIds.length || !current.containsAll(pageIds)) {
+        throw const ValidationException('The page list is out of date.');
+      }
+      await _writeOrder(documentId, pageIds);
+      await _refreshDocument(documentId);
+    });
+  }
+
+  /// Writes page_order 0…n-1 and keeps search result page numbers in sync.
+  Future<void> _writeOrder(String documentId, List<String> pageIds) async {
+    for (var i = 0; i < pageIds.length; i++) {
+      await (_db.update(_db.pages)..where((pg) => pg.id.equals(pageIds[i])))
+          .write(PagesCompanion(pageOrder: Value(i)));
+      await _db.customStatement(
+        'UPDATE search_index SET page_number = ? WHERE page_id = ?',
+        [i + 1, pageIds[i]],
+      );
+    }
+  }
+
+  /// Recomputes page count, cover thumbnail and modification time.
+  Future<void> _refreshDocument(String documentId) async {
+    final pages = await getPages(documentId);
+    await (_db.update(
+      _db.documents,
+    )..where((d) => d.id.equals(documentId))).write(
+      DocumentsCompanion(
+        pageCount: Value(pages.length),
+        thumbnailPath: Value(pages.isEmpty ? null : pages.first.thumbnailPath),
+        updatedAt: Value(_clock()),
+      ),
+    );
+    await _refreshSize(documentId);
+  }
+
+  Future<void> _refreshSize(String documentId) async {
+    final size = await _storage.sizeOf(_storage.documentDir(documentId));
+    await (_db.update(_db.documents)..where((d) => d.id.equals(documentId)))
+        .write(DocumentsCompanion(fileSize: Value(size)));
+  }
+
+  PagesCompanion _pageCompanion(
+    NewPage page,
+    String documentId,
+    int order,
+    DateTime now,
+  ) => PagesCompanion.insert(
+    id: page.id,
+    documentId: documentId,
+    pageOrder: order,
+    originalPath: page.originalPath,
+    processedPath: Value(page.processedPath),
+    thumbnailPath: Value(page.thumbnailPath),
+    width: page.width,
+    height: page.height,
+    cropCorners: Value(
+      page.cropCorners == null ? null : jsonEncode(page.cropCorners!.toList()),
+    ),
+    createdAt: now,
+  );
 
   @override
   Future<ScanDocument> createDocument({
@@ -101,27 +305,7 @@ class DriftDocumentRepository implements DocumentRepository {
             ),
           );
       for (var i = 0; i < pages.length; i++) {
-        final page = pages[i];
-        await _db
-            .into(_db.pages)
-            .insert(
-              PagesCompanion.insert(
-                id: page.id,
-                documentId: id,
-                pageOrder: i,
-                originalPath: page.originalPath,
-                processedPath: Value(page.processedPath),
-                thumbnailPath: Value(page.thumbnailPath),
-                cropCorners: Value(
-                  page.cropCorners == null
-                      ? null
-                      : jsonEncode(page.cropCorners!.toList()),
-                ),
-                width: page.width,
-                height: page.height,
-                createdAt: now,
-              ),
-            );
+        await _db.into(_db.pages).insert(_pageCompanion(pages[i], id, i, now));
       }
       await _db.indexDocumentTitle(id, cleanTitle);
     });
