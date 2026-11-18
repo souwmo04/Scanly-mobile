@@ -13,6 +13,19 @@ abstract final class Routes {
 
   static String folder(String id) => '/files/folder/$id';
 
+  /// Page organizer of a document.
+  static String pages(String documentId) => '/document/$documentId/pages';
+
+  /// Editor for one page.
+  static String editPage(String documentId, String pageId) =>
+      '/document/$documentId/page/$pageId/edit';
+
+  /// Scanner that appends new pages to [documentId].
+  static String scanAppend(String documentId) => '/scan?append=$documentId';
+
+  /// Scanner that replaces the image of [pageId] (retake).
+  static String scanRetake(String pageId) => '/scan?retake=$pageId';
+
   /// Opens a document, optionally at a one-based [page].
   static String document(String id, {int? page}) =>
       page == null ? '/document/$id' : '/document/$id?page=$page';

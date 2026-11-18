@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../features/editor/page_editor_screen.dart';
+import '../../features/editor/page_organizer_screen.dart';
 import '../../features/folders/folder_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/library/library_screen.dart';
@@ -82,6 +84,8 @@ GoRouter createRouter() => GoRouter(
         fullscreenDialog: true,
         child: ScannerScreen(
           forceCamera: state.uri.queryParameters['camera'] == '1',
+          appendToDocument: state.uri.queryParameters['append'],
+          retakePageId: state.uri.queryParameters['retake'],
         ),
       ),
     ),
@@ -91,6 +95,20 @@ GoRouter createRouter() => GoRouter(
       builder: (context, state) => DocumentScreen(
         documentId: state.pathParameters['id']!,
         initialPage: int.tryParse(state.uri.queryParameters['page'] ?? ''),
+      ),
+    ),
+    GoRoute(
+      path: '/document/:id/pages',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) =>
+          PageOrganizerScreen(documentId: state.pathParameters['id']!),
+    ),
+    GoRoute(
+      path: '/document/:id/page/:pageId/edit',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (context, state) => MaterialPage(
+        fullscreenDialog: true,
+        child: PageEditorScreen(pageId: state.pathParameters['pageId']!),
       ),
     ),
   ],
