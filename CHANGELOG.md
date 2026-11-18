@@ -6,6 +6,15 @@ All notable changes to Scanly are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-18 (Milestone 5: PDF)
+
+### Added
+- PDF creation in A4, A5, Letter, Legal or original size, portrait/landscape/automatic,
+  with three compression levels. PDFs are cached and refreshed only when pages change.
+- PDF viewer with page navigation, go to page, pinch zoom and file size.
+- Export options sheet, share sheet and system printing.
+- Merge several documents into one, and split a document at chosen pages.
+
 ## [0.4.0] - 2026-11-18 (Milestone 4: Editor)
 
 ### Added
