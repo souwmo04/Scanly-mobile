@@ -134,7 +134,7 @@ Legend: `[x]` done · `[ ]` to do · `[~]` in progress · `[!]` needs macOS / a 
 - [x] Bengali Unicode tokenization in FTS5 tested (M1, plus Bengali grouped-search tests)
 - [x] Fixed: folder card counts could overflow at large text sizes
 - [x] 332 tests passing; release APK builds, CAMERA permission only
-- [ ] Shared action sheet should scroll when it has many entries (the document sheet uses a local scrollable copy for now)
+- [x] Shared action sheet scrolls when it has many entries (short phones, large text)
 
 ## Milestone 8: Release
 
