@@ -42,17 +42,22 @@ Legend: `[x]` done · `[ ]` to do · `[~]` in progress · `[!]` needs macOS / a 
 - [x] Unit tests: storage (12), database/search (17), settings (3), formatters (4)
 - [x] Widget tests: navigation, scanner route, dark theme, folder creation, search (6)
 - [x] Build a debug APK; tested on the Android emulator (Pixel 10 Pro, Android 37) in light and dark mode
-- [x] The Scan route shows an honest "not available yet" screen until Milestone 2
+- [x] The Scan route showed an honest "not available yet" screen until Milestone 2 replaced it
 
-## Milestone 2: Android scanner
+## Milestone 2: Android scanner ✅ (needs a check on a physical phone)
 
-- [ ] Add a `DocumentScanner` abstraction (domain layer)
-- [ ] ML Kit Document Scanner implementation (`google_mlkit_document_scanner`)
-- [ ] Multi-page capture plus gallery import
-- [ ] Turn scanner output into Page entities and save the files
-- [ ] Fall back to the custom camera if ML Kit is unavailable
-- [ ] Permission handling and denial UX
-- [!] Test on a physical Android phone
+- [x] `DocumentScanner` / `GalleryPicker` abstractions in the domain layer
+- [x] ML Kit Document Scanner (`google_mlkit_document_scanner` 0.7.2): full mode, up to 100 pages per session, gallery import inside the scanner
+- [x] Gallery import from Home ("Import from photos") and from the camera screen, via the system photo picker (no storage permission)
+- [x] Import pipeline: byte-identical originals, EXIF-aware sizes, 480 px thumbnails decoded natively, one page at a time, full rollback on failure
+- [x] Built-in camera: preview, flash (off/auto/on), camera switch, manual capture, page counter, undo last page, discard confirmation
+- [x] Falls back to the built-in camera when ML Kit is unavailable; after a cancelled Google scan the snackbar offers "Use camera"
+- [x] Settings → Scanner: Google scanner or built-in camera (Android)
+- [x] Permission handling: clear messages for denied, restricted, missing or busy cameras, each with a way forward
+- [x] Release APK permissions: CAMERA only. Plugin-added microphone, storage and network (Google telemetry) permissions removed
+- [x] Tests: import pipeline (12), scanner flows with fakes (11); 64 total passing
+- [x] Debug and release APKs build
+- [!] On the emulator, Play services couldn't install Google's scanner module ("Something went wrong"). Scanly handled the cancel correctly. Test a full ML Kit scan and the built-in camera on a physical Android phone
 
 ## Milestone 3: iOS scanner (shared OpenCV pipeline)
 
