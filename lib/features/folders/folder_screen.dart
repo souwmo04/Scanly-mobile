@@ -9,6 +9,7 @@ import '../../shared/providers/library_providers.dart';
 import '../../shared/widgets/state_views.dart';
 import '../library/document_collection.dart';
 import '../library/library_controller.dart';
+import 'add_documents_sheet.dart';
 import 'folder_actions.dart';
 
 /// Documents inside one folder.
@@ -69,13 +70,17 @@ class _FolderScreenState extends ConsumerState<FolderScreen> {
         },
         child: Scaffold(
           appBar: _selection.isActive
-              ? SelectionAppBar(
-                  selection: _selection,
-                  allIds: docList.map((d) => d.id).toList(),
-                )
+              ? SelectionAppBar(selection: _selection, documents: docList)
               : AppBar(
                   title: Text(folder?.name ?? ''),
                   actions: [
+                    if (folder != null)
+                      IconButton(
+                        tooltip: 'Add documents',
+                        icon: const Icon(Icons.playlist_add_rounded),
+                        onPressed: () =>
+                            addDocumentsToFolder(context, ref, folder),
+                      ),
                     if (folder != null)
                       IconButton(
                         tooltip: 'Folder options',
@@ -99,14 +104,18 @@ class _FolderScreenState extends ConsumerState<FolderScreen> {
                     child: CollectionToolbar(count: docs.length),
                   ),
                   if (docs.isEmpty)
-                    const SliverFillRemaining(
+                    SliverFillRemaining(
                       hasScrollBody: false,
                       child: EmptyState(
                         icon: Icons.folder_open_rounded,
                         title: 'This folder is empty',
                         message:
-                            'Use "Move to folder" on any document to add it '
-                            'here.',
+                            'Add documents you already have, or use "Move to '
+                            'folder" on any document.',
+                        actionLabel: folder == null ? null : 'Add documents',
+                        onAction: folder == null
+                            ? null
+                            : () => addDocumentsToFolder(context, ref, folder),
                       ),
                     )
                   else
@@ -124,7 +133,10 @@ class _FolderScreenState extends ConsumerState<FolderScreen> {
                 error: (error, _) => [
                   SliverFillRemaining(
                     hasScrollBody: false,
-                    child: ErrorState(error: error),
+                    child: ErrorState(
+                      error: error,
+                      onRetry: () => ref.invalidate(documentsProvider(query)),
+                    ),
                   ),
                 ],
               ),
