@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/routing/routes.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/utils/formatters.dart';
 import '../../domain/entities/scan_document.dart';
@@ -108,6 +109,19 @@ class _DocumentViewState extends ConsumerState<_DocumentView> {
     if (deleted && mounted) context.pop();
   }
 
+  /// Opens [location] and reloads the document when the user comes back.
+  Future<void> _openAndRefresh(String location) async {
+    await context.push<Object?>(location);
+    if (mounted) ref.invalidate(documentDetailProvider(widget.document.id));
+  }
+
+  void _editCurrentPage() {
+    if (widget.pages.isEmpty) return;
+    _openAndRefresh(
+      Routes.editPage(widget.document.id, widget.pages[_index].id),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -127,6 +141,16 @@ class _DocumentViewState extends ConsumerState<_DocumentView> {
           ],
         ),
         actions: [
+          IconButton(
+            tooltip: 'Edit page',
+            icon: const Icon(Icons.tune_rounded),
+            onPressed: pages.isEmpty ? null : _editCurrentPage,
+          ),
+          IconButton(
+            tooltip: 'Pages',
+            icon: const Icon(Icons.grid_view_rounded),
+            onPressed: () => _openAndRefresh(Routes.pages(doc.id)),
+          ),
           IconButton(
             tooltip: doc.isFavorite
                 ? 'Remove from favorites'
