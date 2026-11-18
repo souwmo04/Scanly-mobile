@@ -8,6 +8,7 @@ import '../../features/folders/folder_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/library/library_screen.dart';
 import '../../features/pdf_viewer/document_screen.dart';
+import '../../features/pdf_viewer/pdf_viewer_screen.dart';
 import '../../features/scanner/scanner_screen.dart';
 import '../../features/search/search_screen.dart';
 import '../../features/settings/info_screens.dart';
@@ -102,6 +103,14 @@ GoRouter createRouter() => GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) =>
           PageOrganizerScreen(documentId: state.pathParameters['id']!),
+    ),
+    GoRoute(
+      path: '/document/:id/pdf',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => PdfViewerScreen(
+        documentId: state.pathParameters['id']!,
+        initialPage: int.tryParse(state.uri.queryParameters['page'] ?? ''),
+      ),
     ),
     GoRoute(
       path: '/document/:id/page/:pageId/edit',

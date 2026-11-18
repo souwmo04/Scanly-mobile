@@ -20,6 +20,11 @@ abstract final class Routes {
   static String editPage(String documentId, String pageId) =>
       '/document/$documentId/page/$pageId/edit';
 
+  /// PDF viewer of a document, optionally at a one-based [page].
+  static String pdf(String documentId, {int? page}) => page == null
+      ? '/document/$documentId/pdf'
+      : '/document/$documentId/pdf?page=$page';
+
   /// Scanner that appends new pages to [documentId].
   static String scanAppend(String documentId) => '/scan?append=$documentId';
 
