@@ -17,6 +17,7 @@ class PrefsSettingsRepository implements SettingsRepository {
   static const _ocrLanguageKey = 'settings.ocr_language';
   static const _autoOcrKey = 'settings.auto_ocr';
   static const _compressionKey = 'settings.compression';
+  static const _engineKey = 'settings.scanner_engine';
 
   @override
   AppSettings load() {
@@ -24,6 +25,11 @@ class PrefsSettingsRepository implements SettingsRepository {
     return AppSettings(
       themeMode: _enum(_themeKey, AppThemeMode.values, defaults.themeMode),
       scanQuality: _enum(_qualityKey, ScanQuality.values, defaults.scanQuality),
+      scannerEngine: _enum(
+        _engineKey,
+        ScannerEngine.values,
+        defaults.scannerEngine,
+      ),
       pdfPageSize: _enum(
         _pageSizeKey,
         PdfPageSize.values,
@@ -58,6 +64,7 @@ class PrefsSettingsRepository implements SettingsRepository {
       _prefs.setString(_ocrLanguageKey, settings.ocrLanguage.name),
       _prefs.setBool(_autoOcrKey, settings.autoOcr),
       _prefs.setString(_compressionKey, settings.compression.name),
+      _prefs.setString(_engineKey, settings.scannerEngine.name),
     ]);
   }
 

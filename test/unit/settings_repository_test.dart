@@ -16,6 +16,7 @@ void main() {
     const custom = AppSettings(
       themeMode: AppThemeMode.dark,
       scanQuality: ScanQuality.maximum,
+      scannerEngine: ScannerEngine.builtInCamera,
       pdfPageSize: PdfPageSize.legal,
       pdfOrientation: PdfOrientation.landscape,
       ocrLanguage: OcrLanguage.bangla,
