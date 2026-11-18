@@ -78,8 +78,12 @@ GoRouter createRouter() => GoRouter(
     GoRoute(
       path: Routes.scan,
       parentNavigatorKey: _rootNavigatorKey,
-      pageBuilder: (context, state) =>
-          const MaterialPage(fullscreenDialog: true, child: ScannerScreen()),
+      pageBuilder: (context, state) => MaterialPage(
+        fullscreenDialog: true,
+        child: ScannerScreen(
+          forceCamera: state.uri.queryParameters['camera'] == '1',
+        ),
+      ),
     ),
     GoRoute(
       path: '/document/:id',

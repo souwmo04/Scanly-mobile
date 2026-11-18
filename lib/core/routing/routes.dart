@@ -8,6 +8,9 @@ abstract final class Routes {
   static const about = '/settings/about';
   static const scan = '/scan';
 
+  /// Opens the scanner straight in Scanly's built-in camera.
+  static const scanWithCamera = '/scan?camera=1';
+
   static String folder(String id) => '/files/folder/$id';
 
   /// Opens a document, optionally at a one-based [page].
