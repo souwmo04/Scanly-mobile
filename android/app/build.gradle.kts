@@ -16,6 +16,16 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+// Official releases (GitHub Actions, or `-PrequireReleaseSigning=true`) must be
+// signed with the release key: a debug-signed APK cannot update a
+// release-signed install, so users would have to uninstall and lose data.
+if (project.hasProperty("requireReleaseSigning") && !keystorePropertiesFile.exists()) {
+    throw GradleException(
+        "Release signing required but android/key.properties is missing. " +
+            "See docs/RELEASE.md.",
+    )
+}
+
 android {
     namespace = "com.scanly.scanly"
     compileSdk = flutter.compileSdkVersion
