@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,6 +13,7 @@ import '../../domain/entities/app_settings.dart';
 import '../../domain/usecases/import_pages.dart';
 import '../../shared/providers/scanner_providers.dart';
 import '../../shared/widgets/dialogs.dart';
+import '../ocr/ocr_queue.dart';
 import '../settings/settings_controller.dart';
 
 /// Lets the user pick images from their photo library, saves them as one
@@ -47,6 +50,9 @@ Future<void> importImagesFromGallery(
           onProgress: (done, _) => progress.value = done,
         );
     navigator.pop();
+    if (ref.read(settingsControllerProvider).autoOcr) {
+      unawaited(ref.read(ocrQueueProvider.notifier).enqueueDocument(id));
+    }
     if (context.mounted) await context.push(Routes.document(id));
   } on Object catch (error) {
     navigator.pop();

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,8 +13,10 @@ import '../../core/utils/formatters.dart';
 import '../../domain/entities/app_settings.dart';
 import '../../domain/services/document_scanner.dart';
 import '../../domain/usecases/import_pages.dart';
+import '../../shared/providers/core_providers.dart';
 import '../../shared/providers/scanner_providers.dart';
 import '../../shared/widgets/dialogs.dart';
+import '../ocr/ocr_queue.dart';
 import '../settings/settings_controller.dart';
 import 'camera_capture_view.dart';
 
@@ -121,7 +124,12 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       _error = null;
     });
     final importer = ref.read(importPagesProvider);
-    final quality = ref.read(settingsControllerProvider).compression;
+    final settings = ref.read(settingsControllerProvider);
+    final quality = settings.compression;
+    // Captured now: the screen may be gone when OCR is queued.
+    final ocrQueue = settings.autoOcr
+        ? ref.read(ocrQueueProvider.notifier)
+        : null;
     final sources = [
       for (final p in pages) PageSource(p.path, autoCrop: p.autoCrop),
     ];
@@ -138,13 +146,25 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
           sources.first,
           jpegQuality: quality.jpegQuality,
         );
+        if (ocrQueue != null) unawaited(ocrQueue.enqueuePages([retake]));
       } else if (append != null) {
+        final documents = ref.read(documentRepositoryProvider);
+        final before = ocrQueue == null
+            ? const <String>{}
+            : {for (final p in await documents.getPages(append)) p.id};
         await importer.appendTo(
           append,
           sources,
           jpegQuality: quality.jpegQuality,
           onProgress: progress,
         );
+        if (ocrQueue != null) {
+          final added = [
+            for (final p in await documents.getPages(append))
+              if (!before.contains(p.id)) p.id,
+          ];
+          unawaited(ocrQueue.enqueuePages(added));
+        }
       } else {
         final id = await importer.call(
           sources,
@@ -152,6 +172,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
           title: defaultScanTitle(DateTime.now()),
           onProgress: progress,
         );
+        if (ocrQueue != null) unawaited(ocrQueue.enqueueDocument(id));
         _deleteTemporary(pages);
         if (mounted) context.pushReplacement(Routes.document(id));
         return;
