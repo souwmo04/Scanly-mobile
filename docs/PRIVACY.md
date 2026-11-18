@@ -30,7 +30,11 @@ On Android, Google ML Kit's document scanner and text recognizer are provided th
 Play services and run on the device. Google's own terms govern Play services. The first time
 you scan, Play services may download the scanner module itself.
 
+## No network access
 
+Release builds of Scanly for Android declare **no internet permission**. Some Google libraries
+add one to upload usage statistics; Scanly removes it, so the app can't send anything off your
+phone even by accident. The only permission it asks for is the camera.
 
 ## Sharing
 
