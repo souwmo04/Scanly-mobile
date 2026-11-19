@@ -136,11 +136,19 @@ Legend: `[x]` done · `[ ]` to do · `[~]` in progress · `[!]` needs macOS / a 
 - [x] 332 tests passing; release APK builds, CAMERA permission only
 - [x] Shared action sheet scrolls when it has many entries (short phones, large text)
 
-## Milestone 8: Release
+## Milestone 8: Release ✅ v1.0.0 (zero-cost distribution via GitHub Releases)
 
-- [ ] Performance pass (thumbnails, lazy loading, memory)
-- [ ] Interruption recovery and temp cleanup on startup
-- [ ] Privacy review (no network calls, no analytics)
-- [ ] Integration tests
-- [ ] Release APK and signed AAB
-- [!] iOS release configuration and TestFlight (needs macOS)
+- [x] Performance pass: display-size image decoding everywhere, lazy lists, isolates for heavy work; large-library test (1,000 documents / 5,000 pages: every query ≤ 13 ms) — docs/PERFORMANCE.md
+- [x] Startup: recovery and OCR resume run after the first frame
+- [x] Privacy audit: no network code, analytics, ads or paid APIs; proprietary deps listed — docs/PRIVACY_AUDIT.md
+- [x] Clear all data also removes recent searches and plugin cache copies (tested)
+- [x] App data excluded from cloud backups (device-to-device transfer still allowed on Android 12+)
+- [x] Device integration tests: full app flow and OCR benchmark (`integration_test/`, not yet run on a device)
+- [x] App icon (adaptive and themed), round icon, launch screens (Android 12+ splash, iOS storyboard) from a generator script
+- [x] Release key created locally (`signing/`, git-ignored, never committed); official builds refuse the debug key
+- [x] Signed v1.0.0 APKs (arm64-v8a 44 MB, armeabi-v7a 36 MB, x86_64 47 MB, universal 116 MB) and AAB (89 MB): same versionCode, verified certificate, CAMERA only
+- [x] GitHub Actions: CI on every push; tag `vX.Y.Z` builds and publishes a signed GitHub Release (needs 4 repository secrets)
+- [x] Install/update guide, release guide, free update process (Obtainium), F-Droid readiness, fastlane metadata
+- [ ] **You:** back up `signing/` offline; add the 4 signing secrets to GitHub; approve publishing v1.0.0
+- [!] Run the integration tests and real scans on a physical Android phone
+- [!] iOS: build and test on a Mac (free Apple ID allows a 7-day personal install; TestFlight/App Store need a paid membership, so iOS isn't distributed at zero cost)
