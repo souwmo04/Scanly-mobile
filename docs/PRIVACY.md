@@ -1,6 +1,6 @@
 # Scanly Privacy Policy (Draft)
 
-_Last updated: 18 November 2026_
+_Last updated: 19 November 2026_
 
 Scanly is built so your documents never leave your device.
 
@@ -11,13 +11,21 @@ crash-reporting service that sends data to us.
 
 ## Where your documents live
 
-Scans, processed images, PDFs, and extracted text are stored in Scanly's private app storage
-on your phone. Other apps can't read them. When you uninstall Scanly, they're deleted.
+Scans, processed images, PDFs, extracted text, and the search index are stored in Scanly's
+private app storage on your phone. Your recent searches are kept in Scanly's private settings
+on the device. Other apps can't read any of it. When you uninstall Scanly, it's deleted.
+
+On Android, Scanly excludes all of its data from cloud backups (such as Google backup).
+It can only be moved directly to a new phone during device-to-device setup. On iPhone,
+iCloud or computer backups that you have turned on may include app data;
+that is handled by your phone and your backup provider, not by Scanly.
 
 ## Processing
 
 Edge detection, image enhancement, PDF generation, and text recognition (OCR) all run
-on-device. Scanly never uploads your document images or text to any server.
+on-device, including the recognition models, which ship inside the app. Scanly never uploads
+your document images, recognised text, or searches to any server. Scanly is free: there are
+no ads, subscriptions, or paid online services.
 
 ## Permissions
 
@@ -42,7 +50,9 @@ Files leave Scanly only when you share or export them yourself, through your pho
 
 ## Deleting your data
 
-Settings → **Clear all data** permanently deletes every document, folder, and OCR result.
+Settings → **Clear all data** permanently deletes every document, folder, page image, PDF,
+recognised text, the search index, recent searches, and temporary copies made while importing
+or sharing. Your app settings (theme, scan quality, sort order) are kept.
 
 ## Contact
 
