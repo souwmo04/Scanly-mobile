@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/services/storage_service.dart';
@@ -48,10 +51,29 @@ final searchRepositoryProvider = Provider<SearchRepository>(
   (ref) => DriftSearchRepository(ref.watch(appDatabaseProvider)),
 );
 
+/// The app's private cache folder (Android `cacheDir`, iOS `Caches`), or
+/// null when the platform has none. Overridden in tests.
+final cacheDirectoryProvider = Provider<Future<Directory?> Function()>(
+  (ref) => _platformCacheDirectory,
+);
+
+Future<Directory?> _platformCacheDirectory() async {
+  // Only phones have an app-private cache. On desktop hosts (including
+  // `flutter test`) the temporary directory is shared with other programs
+  // and must never be emptied.
+  if (!Platform.isAndroid && !Platform.isIOS) return null;
+  try {
+    return await getTemporaryDirectory();
+  } on Object {
+    return null;
+  }
+}
+
 final maintenanceRepositoryProvider = Provider<MaintenanceRepository>(
   (ref) => LocalMaintenanceRepository(
     ref.watch(appDatabaseProvider),
     ref.watch(storageServiceProvider),
+    cacheDirectory: ref.watch(cacheDirectoryProvider),
   ),
 );
 

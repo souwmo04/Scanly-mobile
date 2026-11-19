@@ -7,9 +7,9 @@ import '../../core/routing/routes.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/utils/formatters.dart';
 import '../../domain/entities/app_settings.dart';
-import '../../shared/providers/core_providers.dart';
 import '../../shared/providers/library_providers.dart';
 import '../../shared/widgets/dialogs.dart';
+import 'clear_all_data.dart';
 import 'settings_controller.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -201,14 +201,19 @@ class SettingsScreen extends ConsumerWidget {
       context,
       title: 'Clear all data?',
       message:
-          'Every document, folder, page and extracted text will be '
-          'permanently deleted from this device. This cannot be undone.',
+          'Every document, folder, page, extracted text and recent search '
+          'will be permanently deleted from this device. This cannot be '
+          'undone.',
       confirmLabel: 'Delete everything',
       destructive: true,
     );
     if (!confirmed || !context.mounted) return;
     try {
-      await ref.read(maintenanceRepositoryProvider).clearAllData();
+      await ref.read(clearAllDataProvider)();
+      // Drop decoded thumbnails of the deleted pages from memory.
+      PaintingBinding.instance.imageCache
+        ..clear()
+        ..clearLiveImages();
       ref.invalidate(storageUsageProvider);
       if (context.mounted) showMessage(context, 'All data cleared');
     } on Object catch (error) {
