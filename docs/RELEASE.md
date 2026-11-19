@@ -82,13 +82,19 @@ workflows; they are never shown in logs or to forks.
 
 | Secret | Value |
 | --- | --- |
-| `SCANLY_KEYSTORE_BASE64` | Output of `base64 -w0 signing/scanly-release.jks` (PowerShell: `[Convert]::ToBase64String([IO.File]::ReadAllBytes("signing\scanly-release.jks"))`) |
+| `SCANLY_KEYSTORE_BASE64` | Output of `base64 -w0 signing/scanly-release.jks`. On Windows, copy it straight to the clipboard: `[Convert]::ToBase64String([IO.File]::ReadAllBytes("signing\scanly-release.jks")) \| Set-Clipboard` (about 5,700 characters) |
 | `SCANLY_KEYSTORE_PASSWORD` | Keystore password (from `android/key.properties`) |
 | `SCANLY_KEY_ALIAS` | `scanly` |
 | `SCANLY_KEY_PASSWORD` | Key password (same as the keystore password) |
 
 Without these secrets the workflow stops with an error rather than publishing
 debug-signed files.
+
+If the run says "Signing secrets are missing", one of the four is empty or not visible to
+the workflow. Check that all four appear under **Repository secrets** with exactly these
+names. Secrets saved under an **Environment**, or entries on the **Variables** tab, are not
+passed to this workflow. After fixing them, re-run the failed "Release" run from the
+Actions tab.
 
 ### Manual release (without Actions)
 
