@@ -176,6 +176,41 @@ abstract final class Contours {
     return total == 0 ? 0 : hits / total;
   }
 
+  /// Pixel radius used when checking a line against edge pixels.
+  static const supportRadius = 2;
+
+  /// [edgeSupport] for each side separately (top, right, bottom, left).
+  static List<double> sideSupport(GrayImage edges, Quad quad) {
+    final p = quad.points;
+    return [
+      for (var i = 0; i < 4; i++)
+        _segmentSupport(edges, p[i], p[(i + 1) % 4], supportRadius),
+    ];
+  }
+
+  /// Edge support of one line segment from [a] to [b].
+  static double segmentSupport(GrayImage edges, Pt a, Pt b) =>
+      _segmentSupport(edges, a, b, supportRadius);
+
+  static double _segmentSupport(GrayImage edges, Pt a, Pt b, int radius) {
+    final steps = math.max(1, a.distanceTo(b).round());
+    var hits = 0;
+    // Skip the ends: corners are often rounded or slightly off.
+    final from = (steps * 0.05).round();
+    final to = steps - from;
+    for (var s = from; s <= to; s++) {
+      final t = s / steps;
+      final x = (a.x + (b.x - a.x) * t).round();
+      final y = (a.y + (b.y - a.y) * t).round();
+      if (_nearEdge(edges, x, y, radius)) hits++;
+    }
+    return hits / (to - from + 1);
+  }
+
+  /// Whether an edge pixel lies within [r] px of (x, y).
+  static bool nearEdge(GrayImage edges, int x, int y, int r) =>
+      _nearEdge(edges, x, y, r);
+
   static bool _nearEdge(GrayImage edges, int x, int y, int r) {
     for (var dy = -r; dy <= r; dy++) {
       final ny = y + dy;

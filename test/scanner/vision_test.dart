@@ -61,6 +61,46 @@ GrayImage scene({
   return img;
 }
 
+/// Paints a busy desk over [img] outside [keepOut]: random dark and light
+/// strokes, blocks and short scribbles, like a notebook spiral, cables,
+/// fabric and other papers around the page.
+void clutter(GrayImage img, {Quad? keepOut, int seed = 7, int count = 260}) {
+  final rnd = math.Random(seed);
+  bool inside(double x, double y) {
+    final q = keepOut;
+    if (q == null) return false;
+    final poly = q.points;
+    var c = false;
+    for (var i = 0, j = 3; i < 4; j = i++) {
+      final pi = poly[i];
+      final pj = poly[j];
+      if ((pi.y > y) != (pj.y > y) &&
+          x < (pj.x - pi.x) * (y - pi.y) / (pj.y - pi.y) + pi.x) {
+        c = !c;
+      }
+    }
+    return c;
+  }
+
+  for (var n = 0; n < count; n++) {
+    final x0 = rnd.nextDouble() * img.width;
+    final y0 = rnd.nextDouble() * img.height;
+    final angle = rnd.nextDouble() * math.pi;
+    final len = 10 + rnd.nextDouble() * 90;
+    final thick = 1 + rnd.nextInt(5);
+    final v = rnd.nextBool() ? rnd.nextInt(60) : 160 + rnd.nextInt(95);
+    for (var s = 0; s < len; s++) {
+      for (var t = 0; t < thick; t++) {
+        final x = x0 + math.cos(angle) * s - math.sin(angle) * t;
+        final y = y0 + math.sin(angle) * s + math.cos(angle) * t;
+        if (x < 0 || y < 0 || x >= img.width || y >= img.height) continue;
+        if (inside(x, y)) continue;
+        img.set(x.toInt(), y.toInt(), v);
+      }
+    }
+  }
+}
+
 /// Max corner error relative to the frame diagonal.
 double cornerError(Quad found, Quad expected, int w, int h) =>
     found.maxCornerDistance(expected) / math.sqrt(w * w + h * h);
@@ -313,6 +353,45 @@ void main() {
       }
       // Generous bound for a debug-mode JIT on CI; release AOT is faster.
       expect(watch.elapsedMilliseconds / 5, lessThan(250));
+    });
+
+    test('a busy desk with no page gives no outline', () {
+      for (var seed = 1; seed <= 16; seed++) {
+        final img = GrayImage(640, 480)..data.fillRange(0, 640 * 480, 110);
+        clutter(img, seed: seed, count: 400);
+        final d = detector.detect(img);
+        expect(d, isNull, reason: 'seed $seed found ${d?.quad}');
+      }
+    });
+
+    test('page with handwriting on a busy desk: right outline or none', () {
+      const truth = Quad(Pt(150, 70), Pt(480, 90), Pt(470, 430), Pt(130, 410));
+      for (var seed = 1; seed <= 16; seed++) {
+        final img = scene(doc: truth, text: true, noise: 8, background: 95);
+        clutter(img, keepOut: truth, seed: seed, count: 300);
+        final d = detector.detect(img);
+        if (d == null) continue;
+        expect(
+          cornerError(d.quad, truth, img.width, img.height),
+          lessThan(0.04),
+          reason: 'seed $seed found ${d.quad}',
+        );
+      }
+    });
+
+    test('a page on a busy desk is still found', () {
+      const truth = Quad(Pt(150, 70), Pt(480, 90), Pt(470, 430), Pt(130, 410));
+      var found = 0;
+      for (var seed = 1; seed <= 6; seed++) {
+        final img = scene(doc: truth, text: true, noise: 8, background: 70);
+        clutter(img, keepOut: truth, seed: seed, count: 120);
+        final d = detector.detect(img);
+        if (d != null &&
+            cornerError(d.quad, truth, img.width, img.height) < 0.04) {
+          found++;
+        }
+      }
+      expect(found, greaterThanOrEqualTo(4));
     });
 
     test('ignores a small card far from document size', () {
