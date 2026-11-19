@@ -4,9 +4,11 @@ A free, offline-first document scanner for Android and iOS, featuring intelligen
 detection, image enhancement, PDF generation, and Bangla-English OCR. No subscriptions, no
 watermarks, and no mandatory account.
 
-> **Status:** early development. See [TASKS.md](TASKS.md) for live progress, milestone by milestone.
+> **Version 1.0.0.** Free download for Android from
+> [GitHub Releases](https://github.com/souwmo04/Scanly-mobile/releases). Install guide:
+> [docs/INSTALL.md](docs/INSTALL.md). Progress by milestone: [TASKS.md](TASKS.md).
 
-## Features (planned)
+## Features
 
 | Area | What it does |
 | --- | --- |
@@ -15,7 +17,8 @@ watermarks, and no mandatory account.
 | PDF | A4 / A5 / Letter / Legal / original size, compression, merge, split, share, print |
 | OCR | English (ML Kit), Bangla and mixed Bangla-English (Tesseract), all on-device |
 | Library | Folders, favorites, sorting, multi-select, full-text search over OCR text |
-| Privacy | No account, no cloud, no ads, no analytics; everything stays on the device |
+| Privacy | Camera permission only, no internet permission, no account, ads or analytics; excluded from cloud backups |
+| Free | No subscription, watermark, page limit or paid API, ever |
 
 ## Tech stack
 
@@ -31,7 +34,17 @@ Details are in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 - iOS: **a Mac with Xcode 16+ and CocoaPods**, a device on iOS 15.5 or newer.
   You can't build for iOS from Windows or Linux.
 
-## Getting started
+## Download
+
+Get the APK from [GitHub Releases](https://github.com/souwmo04/Scanly-mobile/releases)
+(`arm64-v8a` for most phones). Updates install over the previous version and keep your
+documents. See [docs/INSTALL.md](docs/INSTALL.md).
+
+Maintainers: [docs/RELEASE.md](docs/RELEASE.md) (signing, versioning, GitHub Actions
+releases), [docs/FDROID.md](docs/FDROID.md), [docs/PRIVACY_AUDIT.md](docs/PRIVACY_AUDIT.md),
+[docs/PERFORMANCE.md](docs/PERFORMANCE.md).
+
+## Getting started (development)
 
 ```bash
 git clone https://github.com/souwmo04/Scanly-mobile.git
