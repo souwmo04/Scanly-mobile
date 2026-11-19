@@ -149,6 +149,8 @@ Legend: `[x]` done · `[ ]` to do · `[~]` in progress · `[!]` needs macOS / a 
 - [x] Signed v1.0.0 APKs (arm64-v8a 44 MB, armeabi-v7a 36 MB, x86_64 47 MB, universal 116 MB) and AAB (89 MB): same versionCode, verified certificate, CAMERA only
 - [x] GitHub Actions: CI on every push; tag `vX.Y.Z` builds and publishes a signed GitHub Release (needs 4 repository secrets)
 - [x] Install/update guide, release guide, free update process (Obtainium), F-Droid readiness, fastlane metadata
-- [ ] **You:** back up `signing/` offline; add the 4 signing secrets to GitHub; approve publishing v1.0.0
+- [x] v1.0.0 published on GitHub Releases (uploaded manually; download checksum verified)
+- [ ] **You:** back up `signing/` offline
+- [ ] **You:** save the 4 signing secrets as Actions repository secrets so future tags release automatically
 - [!] Run the integration tests and real scans on a physical Android phone
 - [!] iOS: build and test on a Mac (free Apple ID allows a 7-day personal install; TestFlight/App Store need a paid membership, so iOS isn't distributed at zero cost)
