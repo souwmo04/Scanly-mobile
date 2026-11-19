@@ -6,6 +6,36 @@ All notable changes to Scanly are recorded here. The format follows
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-19
+
+The first public release of Scanly: a free, offline document scanner for Android with
+Bangla and English text recognition. No ads, subscriptions, watermarks or account.
+
+### Highlights
+- Scan with Google's document scanner, or with Scanly's own camera with live edge
+  detection and auto-capture.
+- Crop, rotate, filters (grayscale, black & white, enhanced, color), brightness, contrast
+  and sharpness, with undo/redo. Originals are never changed.
+- Searchable PDFs in A4, A5, Letter, Legal or original size; share, print, merge, split.
+- Text recognition in English, Bangla and Bangla + English, fully on the device.
+- Folders, favorites, grouped search with filters and recent searches, duplicate, and
+  sharing several documents at once.
+- Light and dark themes.
+
+### Privacy
+- Only the camera permission; no internet permission.
+- App data is excluded from cloud backups (it can still be moved to a new phone during
+  device-to-device setup).
+- Clear all data also removes recent searches and temporary copies.
+
+### Added in this release
+- Scanly app icon (adaptive and themed on Android 13+) and branded launch screen.
+- Release signing, signed APKs per CPU type plus universal, and an App Bundle.
+- GitHub Actions: tests on every push, and automatic GitHub Releases from version tags.
+- Install, update and release guides; F-Droid readiness notes and store metadata.
+- Faster startup (recovery and OCR resume run after the first frame) and large-library
+  performance tests.
+
 ## [0.7.0] - 2026-11-19 (Milestone 7: Library)
 
 ### Added
