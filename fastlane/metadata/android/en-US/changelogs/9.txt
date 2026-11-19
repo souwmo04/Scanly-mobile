@@ -1,0 +1,4 @@
+Fixes from the first release:
+- Google's document scanner opens again (it fell back to the built-in camera in 1.0.0).
+- English text recognition works again and no longer produces garbled text.
+- The built-in camera no longer outlines the wrong area on busy backgrounds.

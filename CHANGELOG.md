@@ -6,6 +6,19 @@ All notable changes to Scanly are recorded here. The format follows
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-11-19
+
+Fixes scanning and text recognition in the 1.0.0 download. Install it over 1.0.0; your
+documents are kept.
+
+### Fixed
+- Google's document scanner failed to open in 1.0.0, so Scanly fell back to its built-in
+  camera. It now opens again, with automatic edge detection, cropping and cleanup.
+- English text recognition (ML Kit) failed in 1.0.0 and silently fell back to a slower
+  engine, which produced garbled text. It works again.
+- The built-in camera no longer shows or crops to a wrong outline on busy backgrounds,
+  and finds page corners more precisely.
+
 ## [1.0.0] - 2026-11-19
 
 The first public release of Scanly: a free, offline document scanner for Android with
