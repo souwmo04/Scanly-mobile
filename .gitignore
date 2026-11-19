@@ -40,3 +40,6 @@ ios/Runner.xcworkspace/xcuserdata/
 # Release signing (never commit keys or passwords)
 signing/
 *.p12
+
+# Locally built release files (upload to GitHub Releases, never commit)
+dist/
