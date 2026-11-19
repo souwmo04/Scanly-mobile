@@ -30,26 +30,29 @@ Future<void> main() async {
     ],
   );
 
-  // Clean up after any interrupted work without delaying first frame.
-  unawaited(
-    container
-        .read(maintenanceRepositoryProvider)
-        .recoverInterruptedWork()
-        .catchError((Object error) {
-          debugPrint('Startup cleanup failed: $error');
-        }),
-  );
-
   runApp(
     UncontrolledProviderScope(container: container, child: const ScanlyApp()),
   );
 
-  // Continue text recognition that was interrupted when the app closed,
-  // once the first frame is on screen. Pages run one at a time in the
-  // background; failures are recorded per page.
+  // Background work starts only once the first frame is on screen, so it
+  // never competes with the first build for the database or the disk:
+  // 1. clean up after interrupted work (temp files, orphaned folders),
+  // 2. continue text recognition that was interrupted when the app closed.
+  //    Pages run one at a time; failures are recorded per page.
   WidgetsBinding.instance.addPostFrameCallback((_) {
-    unawaited(container.read(ocrQueueProvider.notifier).resumeUnfinished());
+    unawaited(_afterFirstFrame(container));
   });
+}
+
+Future<void> _afterFirstFrame(ProviderContainer container) async {
+  try {
+    await container
+        .read(maintenanceRepositoryProvider)
+        .recoverInterruptedWork();
+  } on Object catch (error) {
+    debugPrint('Startup cleanup failed: $error');
+  }
+  await container.read(ocrQueueProvider.notifier).resumeUnfinished();
 }
 
 /// Adds licences of bundled data (OCR models, font) to the licence page.
