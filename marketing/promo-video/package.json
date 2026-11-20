@@ -1,0 +1,22 @@
+{
+  "name": "scanly-promo-video",
+  "private": true,
+  "description": "One-minute Bangla promo video for Scanly, built with Remotion.",
+  "scripts": {
+    "studio": "remotion studio src/index.tsx",
+    "render": "remotion render src/index.tsx ScanlyPromo out/Scanly-promo.mp4",
+    "still": "remotion still src/index.tsx ScanlyPromo out/still.png"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.545",
+    "@remotion/google-fonts": "4.0.545",
+    "@remotion/transitions": "4.0.545",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "remotion": "4.0.545"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.2",
+    "typescript": "5.9.3"
+  }
+}
