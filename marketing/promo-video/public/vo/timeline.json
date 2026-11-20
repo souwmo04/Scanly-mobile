@@ -1,0 +1,82 @@
+[
+  {
+    "id": "hook",
+    "file": "vo/hook.mp3",
+    "seconds": 3.264,
+    "startFrame": 0,
+    "durationFrames": 130,
+    "voiceDelayFrames": 8
+  },
+  {
+    "id": "problem",
+    "file": "vo/problem.mp3",
+    "seconds": 8.544,
+    "startFrame": 130,
+    "durationFrames": 294,
+    "voiceDelayFrames": 8
+  },
+  {
+    "id": "turn",
+    "file": "vo/turn.mp3",
+    "seconds": 3.96,
+    "startFrame": 424,
+    "durationFrames": 139,
+    "voiceDelayFrames": 8
+  },
+  {
+    "id": "reveal",
+    "file": "vo/reveal.mp3",
+    "seconds": 4.392,
+    "startFrame": 563,
+    "durationFrames": 182,
+    "voiceDelayFrames": 8
+  },
+  {
+    "id": "scan",
+    "file": "vo/scan.mp3",
+    "seconds": 3.408,
+    "startFrame": 745,
+    "durationFrames": 134,
+    "voiceDelayFrames": 8
+  },
+  {
+    "id": "edit",
+    "file": "vo/edit.mp3",
+    "seconds": 3.6,
+    "startFrame": 879,
+    "durationFrames": 140,
+    "voiceDelayFrames": 8
+  },
+  {
+    "id": "ocr",
+    "file": "vo/ocr.mp3",
+    "seconds": 3.768,
+    "startFrame": 1019,
+    "durationFrames": 145,
+    "voiceDelayFrames": 8
+  },
+  {
+    "id": "pdf",
+    "file": "vo/pdf.mp3",
+    "seconds": 4.416,
+    "startFrame": 1164,
+    "durationFrames": 164,
+    "voiceDelayFrames": 8
+  },
+  {
+    "id": "promise",
+    "file": "vo/promise.mp3",
+    "seconds": 7.752,
+    "startFrame": 1328,
+    "durationFrames": 277,
+    "voiceDelayFrames": 8
+  },
+  {
+    "id": "cta",
+    "file": "vo/cta.mp3",
+    "seconds": 3.672,
+    "startFrame": 1605,
+    "durationFrames": 190,
+    "voiceDelayFrames": 8
+  }
+]
