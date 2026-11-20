@@ -16,7 +16,8 @@ subscription, works offline → free download for Android.
 | `scripts/make_voiceover.py` | Makes `public/vo/*.mp3` and `timeline.json` (scene timing follows the voice) |
 | `scripts/make_music.py` | Synthesises the music and sound effects into `public/music.wav` (no samples, no licences) |
 | `src/scenes/` | The animated scenes |
-| `out/Scanly-promo.mp4` | Rendered video (not committed) |
+| `Scanly-promo.mp4` | The finished video |
+| `public/vo/*.mp3`, `public/music.wav` | Generated voice-over and music |
 
 ## Rebuild
 
@@ -29,6 +30,8 @@ npm install --cache ..\..\tools\npm-cache
 ..\..\tools\py-venv\Scripts\python.exe scripts\make_music.py
 npm run render
 ```
+
+The render goes to `out/Scanly-promo.mp4`; copy it over `Scanly-promo.mp4` to publish it.
 
 `npm run studio` opens a live preview for editing.
 
