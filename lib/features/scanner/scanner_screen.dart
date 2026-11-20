@@ -177,7 +177,30 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
         );
         if (ocrQueue != null) unawaited(ocrQueue.enqueueDocument(id));
         _deleteTemporary(pages);
-        if (mounted) context.pushReplacement(Routes.document(id));
+        final saved = await ref.read(documentRepositoryProvider).getPages(id);
+        if (!mounted) return;
+        final messenger = ScaffoldMessenger.of(context);
+        final router = GoRouter.of(context);
+        context.pushReplacement(Routes.document(id));
+        // Google's review screen closes after "Next", so offer the editor
+        // (crop, rotate, filters) straight away for a page that came out
+        // wrong.
+        messenger
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: const Text('Scan saved'),
+              persist: false,
+              duration: const Duration(seconds: 6),
+              action: saved.isEmpty
+                  ? null
+                  : SnackBarAction(
+                      label: 'Crop & edit',
+                      onPressed: () =>
+                          router.push(Routes.editPage(id, saved.first.id)),
+                    ),
+            ),
+          );
         return;
       }
       _deleteTemporary(pages);
