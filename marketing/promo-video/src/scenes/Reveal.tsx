@@ -154,7 +154,7 @@ export const PromiseScene: React.FC = () => {
   const frame = useCurrentFrame();
   const {fps, durationInFrames} = useVideoConfig();
   const items = ['লোগো', 'বিজ্ঞাপন', 'সাবস্ক্রিপশন'];
-  const collapseAt = 128;
+  const collapseAt = 96;
   const collapse = spring({frame: frame - collapseAt, fps, config: {damping: 16}});
   const exit = interpolate(frame, [durationInFrames - 8, durationInFrames], [1, 0], clamp);
   const free = spring({frame: frame - collapseAt - 4, fps, config: {damping: 9, stiffness: 160}});
@@ -227,7 +227,7 @@ export const PromiseScene: React.FC = () => {
       </AbsoluteFill>
       <AbsoluteFill style={{justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: 44, paddingTop: 260}}>
         <Badge at={collapseAt + 20} icon={<WifiOff />} text="ইন্টারনেট ছাড়াই চলে" />
-        <Badge at={collapseAt + 62} icon={<Shield />} text="ডকুমেন্ট থাকে শুধু আপনার ফোনে" />
+        <Badge at={collapseAt + 50} icon={<Shield />} text="ডকুমেন্ট থাকে শুধু আপনার ফোনে" />
       </AbsoluteFill>
     </AbsoluteFill>
   );

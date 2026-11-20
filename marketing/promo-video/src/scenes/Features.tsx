@@ -10,7 +10,7 @@ const SH = 1212;
 const FeaturePhone: React.FC<{children: React.ReactNode; from?: number}> = ({children, from = 1}) => {
   const frame = useCurrentFrame();
   const {fps, durationInFrames} = useVideoConfig();
-  const s = spring({frame, fps, config: {damping: 15, stiffness: 80}});
+  const s = spring({frame, fps, config: {damping: 16, stiffness: 150}});
   const exit = interpolate(frame, [durationInFrames - 8, durationInFrames], [0, 1], clamp);
   return (
     <Phone
@@ -78,7 +78,7 @@ export const ScanFeature: React.FC = () => {
   const color = locked ? C.green : C.amber;
   const pts = quad.map((p) => p.join(',')).join(' ');
   return (
-    <SceneShell index="০১" title="অটো এজ ডিটেকশন" subtitle="এক ট্যাপেই ঝকঝকে স্ক্যান" glow={C.green}>
+    <SceneShell index="০১" title="অটো এজ ডিটেকশন" subtitle="বর্ডার খুঁজে নেয় নিজে থেকেই" glow={C.green}>
       {/* Camera feed */}
       <AbsoluteFill style={{background: 'linear-gradient(160deg, #6b4a32, #3b2718 70%, #2a1b10)'}}>
         <svg width={SW} height={SH} style={{position: 'absolute', inset: 0}}>
@@ -217,8 +217,8 @@ export const OcrFeature: React.FC = () => {
   const beam = interpolate(frame, [8, 50], [0, 1], {...clamp, easing: Easing.inOut(Easing.sin)});
   const sheet = spring({frame: frame - 54, fps, config: {damping: 15}});
   const fullText = ocrLines.join('\n');
-  const typed = Math.floor(interpolate(frame, [60, 100], [0, fullText.length], clamp));
-  const toast = spring({frame: frame - 104, fps, config: {damping: 12}});
+  const typed = Math.floor(interpolate(frame, [58, 90], [0, fullText.length], clamp));
+  const toast = spring({frame: frame - 94, fps, config: {damping: 12}});
   const pageTop = 180;
   return (
     <SceneShell index="০৩" title="বাংলা + English লেখা চেনে" subtitle="কপি করুন এক ট্যাপে" glow={C.navy300}>

@@ -93,9 +93,9 @@ const Page: React.FC<{width: number; children?: React.ReactNode; style?: React.C
 export const Problem: React.FC = () => {
   const frame = useCurrentFrame();
   const {fps, durationInFrames} = useVideoConfig();
-  const stampAt = 70;
-  const payAt = 128;
-  const priceAt = 182;
+  const stampAt = 62;
+  const payAt = 112;
+  const priceAt = 160;
   const enter = useSpring(0, {damping: 16});
   const stamp = spring({frame: frame - stampAt, fps, config: {damping: 9, stiffness: 180}});
   const shake = frame >= stampAt && frame < stampAt + 14 ? Math.sin(frame * 3.1) * (14 - (frame - stampAt)) * 2.2 : 0;
@@ -313,7 +313,7 @@ export const Turn: React.FC = () => {
         ))}
       </AbsoluteFill>
       <AbsoluteFill style={{justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 300}}>
-        <Kinetic text="এই ঝামেলা শেষ করতে নিয়ে এলাম…" delay={44} size={78} stagger={5} style={{maxWidth: 900}} />
+        <Kinetic text="তাই নিয়ে এলাম…" delay={38} size={96} stagger={5} style={{maxWidth: 900}} />
       </AbsoluteFill>
       <AbsoluteFill style={{background: 'white', opacity: flash}} />
     </AbsoluteFill>
