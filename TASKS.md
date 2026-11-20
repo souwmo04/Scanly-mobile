@@ -57,7 +57,8 @@ Legend: `[x]` done · `[ ]` to do · `[~]` in progress · `[!]` needs macOS / a 
 - [x] Release APK permissions: CAMERA only. Plugin-added microphone, storage and network (Google telemetry) permissions removed
 - [x] Tests: import pipeline (12), scanner flows with fakes (11); 64 total passing
 - [x] Debug and release APKs build
-- [!] On the emulator, Play services couldn't install Google's scanner module ("Something went wrong"). Scanly handled the cancel correctly. Test a full ML Kit scan and the built-in camera on a physical Android phone
+- [x] Full ML Kit scan works on a physical Android phone (user confirmed with v1.0.2)
+- [!] Test the built-in camera on a physical Android phone
 
 ## Milestone 3: Edge detection and auto-capture (iOS + Android built-in camera) ✅
 
