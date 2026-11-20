@@ -1,5 +1,3 @@
 node_modules/
 build/
 out/
-public/vo/*.mp3
-public/music.wav
