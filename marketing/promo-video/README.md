@@ -1,12 +1,12 @@
 # Scanly promo video
 
-A 48-second vertical (1080Ã—1920, 30 fps) marketing video with a Bangla
+A 48-second vertical (1080×1920, 30 fps) marketing video with a Bangla
 voice-over, built in code with [Remotion](https://www.remotion.dev).
 
 Story: there are many scanner apps, but they stamp their logo on every page
-and charge to remove it â†’ Scanly reveal â†’ auto edge detection, crop/rotate/
-filters, Bangla + English OCR, searchable PDF â†’ no logo, ads or
-subscription, works offline â†’ free download for Android.
+and charge to remove it → Scanly reveal → auto edge detection, crop/rotate/
+filters, Bangla + English OCR, searchable PDF → no logo, ads or
+subscription, works offline → free download for Android.
 
 ## Files
 
