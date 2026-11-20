@@ -19,7 +19,10 @@ typedef ImageSizeReader = Future<ImageSize> Function(String imagePath);
 ///   native error) the page is retried with Tesseract `eng`. An empty ML Kit
 ///   result is accepted as is (a blank page should not cost a second pass).
 /// * Bangla: Tesseract `ben`.
-/// * Mixed: Tesseract `ben+eng` in one pass, so nothing is duplicated.
+/// * Mixed: Tesseract `ben+eng` decides whether the page has real Bangla
+///   text ([hasBanglaText]). If it does, that result is kept. If not, the
+///   page is English, so ML Kit reads it: Tesseract is far weaker on
+///   handwriting and invents Bangla digits and letters from pen strokes.
 ///
 /// Every engine output goes through [cleanOcrText]. ML Kit lines carry
 /// boxes normalised 0–1; Tesseract lines have no boxes (the plugin returns
@@ -47,14 +50,31 @@ class DeviceOcrEngine implements OcrEngine {
     try {
       return switch (language) {
         OcrLanguage.english => await _english(imagePath),
-        OcrLanguage.bangla || OcrLanguage.mixed => await _runTesseract(
+        OcrLanguage.bangla => await _runTesseract(
           imagePath,
           languageCodeOf(language),
         ),
+        OcrLanguage.mixed => await _mixed(imagePath),
       };
     } on Object catch (e) {
       throw mapOcrError(e);
     }
+  }
+
+  Future<OcrResult> _mixed(String imagePath) async {
+    final tesseract = await _runTesseract(
+      imagePath,
+      languageCodeOf(OcrLanguage.mixed),
+    );
+    if (hasBanglaText(tesseract.text)) return tesseract;
+    final List<List<PixelLine>> blocks;
+    try {
+      blocks = await _latin.recognizeBlocks(imagePath);
+    } on Object {
+      return tesseract;
+    }
+    final latin = await _fromMlKit(imagePath, blocks);
+    return latin.text.isEmpty ? tesseract : latin;
   }
 
   Future<OcrResult> _english(String imagePath) async {
@@ -127,6 +147,27 @@ class DeviceOcrEngine implements OcrEngine {
       engine: OcrEngineId.tesseract,
     );
   }
+}
+
+/// Whether Tesseract `ben+eng` output contains real Bangla writing.
+///
+/// Counts Bengali letters and signs (digits excluded: Tesseract turns pen
+/// strokes into ০ ১ ৮ easily) against Latin letters. A page counts as Bangla
+/// when it has at least [minLetters] Bengali code points making up at least
+/// [minShare] of all letters, so a few stray symbols on an English page
+/// don't qualify.
+bool hasBanglaText(String text, {int minLetters = 12, double minShare = 0.25}) {
+  var bangla = 0;
+  var latin = 0;
+  for (final rune in text.runes) {
+    if (rune >= 0x0980 && rune <= 0x09FF && (rune < 0x09E6 || rune > 0x09EF)) {
+      bangla++;
+    } else if ((rune >= 0x41 && rune <= 0x5A) ||
+        (rune >= 0x61 && rune <= 0x7A)) {
+      latin++;
+    }
+  }
+  return bangla >= minLetters && bangla >= minShare * (bangla + latin);
 }
 
 /// Maps any engine error to an [AppException] with a user-facing message.

@@ -102,19 +102,72 @@ void main() {
       expect(result.lines, const [OcrLine('আমি ভাত খাই।'), OcrLine('ভালো')]);
     });
 
-    test('Mixed uses a single Tesseract ben+eng pass', () async {
-      final latin = FakeLatin();
-      final tesseract = FakeTesseract(text: 'Invoice চালান\nTotal ১২৩');
+    test('Mixed keeps Tesseract ben+eng when the page has Bangla', () async {
+      final latin = FakeLatin(
+        blocks: [
+          [const PixelLine('unused', 0, 0, 10, 10)],
+        ],
+      );
+      final tesseract = FakeTesseract(
+        text: 'চালান নম্বর ১২৩\nমোট টাকা পরিশোধ করা হয়েছে\nTotal 123',
+      );
       final result = await engine(
         latin: latin,
         tesseract: tesseract,
       ).recognize(path, OcrLanguage.mixed);
 
-      expect(latin.calls, isEmpty);
       expect(tesseract.languages, ['ben+eng']);
+      expect(latin.calls, isEmpty);
+      expect(result.engine, OcrEngineId.tesseract);
       expect(result.languageCode, 'ben+eng');
-      expect(result.text, 'Invoice চালান\nTotal ১২৩');
-      expect(result.lines, hasLength(2));
+      expect(result.lines, hasLength(3));
+    });
+
+    test('Mixed switches to ML Kit for an English page', () async {
+      // What Tesseract made of a handwritten English page on a phone.
+      final tesseract = FakeTesseract(
+        text:
+            'Study of Mating 3 bay 260)\n% NOL NP. ১৩৪ 4 cand\n'
+            'ft System টা Linea equation\n২৮৮০: ৩৯৯০০ এস 2',
+      );
+      final latin = FakeLatin(
+        blocks: [
+          [const PixelLine('Study of Matrix', 100, 200, 600, 260)],
+        ],
+      );
+      final result = await engine(
+        latin: latin,
+        tesseract: tesseract,
+      ).recognize(path, OcrLanguage.mixed);
+
+      expect(tesseract.languages, ['ben+eng']);
+      expect(latin.calls, [path]);
+      expect(result.engine, OcrEngineId.mlKit);
+      expect(result.languageCode, 'eng');
+      expect(result.text, 'Study of Matrix');
+    });
+
+    test('Mixed keeps Tesseract when ML Kit fails or finds nothing', () async {
+      final tesseract = FakeTesseract(text: 'Total 123');
+      final failed = await engine(
+        latin: FakeLatin(error: PlatformException(code: 'error')),
+        tesseract: tesseract,
+      ).recognize(path, OcrLanguage.mixed);
+      expect(failed.engine, OcrEngineId.tesseract);
+      expect(failed.text, 'Total 123');
+
+      final empty = await engine(
+        latin: FakeLatin(),
+        tesseract: tesseract,
+      ).recognize(path, OcrLanguage.mixed);
+      expect(empty.engine, OcrEngineId.tesseract);
+    });
+
+    test('hasBanglaText ignores digits and a few stray letters', () {
+      expect(hasBanglaText('আমি ভাত খাই। আমি বাংলায় লিখি।'), isTrue);
+      expect(hasBanglaText('১২৩৪৫৬৭৮৯০ ১২৩৪৫৬৭৮৯০'), isFalse);
+      expect(hasBanglaText('Linear equations টা are fun to study'), isFalse);
+      expect(hasBanglaText(''), isFalse);
     });
 
     test('Tesseract runner asks for preserved spaces and auto PSM', () {
