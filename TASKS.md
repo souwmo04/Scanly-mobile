@@ -150,6 +150,7 @@ Legend: `[x]` done · `[ ]` to do · `[~]` in progress · `[!]` needs macOS / a 
 - [x] GitHub Actions: CI on every push; tag `vX.Y.Z` builds and publishes a signed GitHub Release (needs 4 repository secrets)
 - [x] Install/update guide, release guide, free update process (Obtainium), F-Droid readiness, fastlane metadata
 - [x] v1.0.0 published on GitHub Releases (uploaded manually; download checksum verified)
+- [x] v1.0.1 published: fixes Google's scanner and ML Kit OCR stripped by R8 in 1.0.0, plus built-in camera false outlines on busy scenes (release APK checked on the Play emulator; uploaded manually; all 6 assets match local SHA-256)
 - [ ] **You:** back up `signing/` offline
 - [ ] **You:** save the 4 signing secrets as Actions repository secrets so future tags release automatically
 - [!] Run the integration tests and real scans on a physical Android phone
