@@ -1,0 +1,3 @@
+- Much better text recognition on English and handwritten pages in Bangla + English mode.
+- "Crop & edit" button right after a scan.
+- The "Scan cancelled" message no longer stays on screen.

@@ -6,6 +6,22 @@ All notable changes to Scanly are recorded here. The format follows
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-11-20
+
+Better text recognition for English and handwritten pages. Install it over 1.0.1; your
+documents are kept.
+
+### Fixed
+- Bangla + English (the default) produced Bangla digits and broken words on English and
+  handwritten pages. Pages without Bangla text are now read with ML Kit, which is far
+  more accurate. Bangla pages still use the Bangla engine. To re-read an older page,
+  open its text and choose a language again.
+- The "Scan cancelled" message no longer stays on screen across the app.
+
+### Added
+- After a scan, a "Crop & edit" button opens the page editor straight away, since
+  Google's review screen closes after Next.
+
 ## [1.0.1] - 2026-11-19
 
 Fixes scanning and text recognition in the 1.0.0 download. Install it over 1.0.0; your
