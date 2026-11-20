@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = ROOT / "voiceover" / "script.json"
 OUT = ROOT / "public" / "vo"
 FPS = 30
-VOICE_DELAY = 0.25  # seconds of silence at the start of each scene
+VOICE_DELAY = 0.12  # seconds of silence at the start of each scene
 
 
 async def main() -> None:
