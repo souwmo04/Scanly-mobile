@@ -2,48 +2,48 @@
   {
     "id": "hook",
     "file": "vo/hook.mp3",
-    "seconds": 2.664,
+    "seconds": 2.688,
     "startFrame": 0,
-    "durationFrames": 96,
+    "durationFrames": 97,
     "voiceDelayFrames": 4
   },
   {
     "id": "problem",
     "file": "vo/problem.mp3",
-    "seconds": 7.728,
-    "startFrame": 96,
-    "durationFrames": 254,
+    "seconds": 7.872,
+    "startFrame": 97,
+    "durationFrames": 258,
     "voiceDelayFrames": 4
   },
   {
     "id": "turn",
     "file": "vo/turn.mp3",
-    "seconds": 2.832,
-    "startFrame": 350,
-    "durationFrames": 95,
+    "seconds": 2.856,
+    "startFrame": 355,
+    "durationFrames": 96,
     "voiceDelayFrames": 4
   },
   {
     "id": "reveal",
     "file": "vo/reveal.mp3",
-    "seconds": 4.032,
-    "startFrame": 445,
-    "durationFrames": 152,
+    "seconds": 4.176,
+    "startFrame": 451,
+    "durationFrames": 156,
     "voiceDelayFrames": 4
   },
   {
     "id": "scan",
     "file": "vo/scan.mp3",
-    "seconds": 3.528,
-    "startFrame": 597,
-    "durationFrames": 122,
+    "seconds": 3.624,
+    "startFrame": 607,
+    "durationFrames": 125,
     "voiceDelayFrames": 4
   },
   {
     "id": "edit",
     "file": "vo/edit.mp3",
     "seconds": 3.408,
-    "startFrame": 719,
+    "startFrame": 732,
     "durationFrames": 118,
     "voiceDelayFrames": 4
   },
@@ -51,32 +51,32 @@
     "id": "ocr",
     "file": "vo/ocr.mp3",
     "seconds": 3.576,
-    "startFrame": 837,
+    "startFrame": 850,
     "durationFrames": 123,
     "voiceDelayFrames": 4
   },
   {
     "id": "pdf",
     "file": "vo/pdf.mp3",
-    "seconds": 3.744,
-    "startFrame": 960,
-    "durationFrames": 128,
+    "seconds": 3.768,
+    "startFrame": 973,
+    "durationFrames": 129,
     "voiceDelayFrames": 4
   },
   {
     "id": "promise",
     "file": "vo/promise.mp3",
-    "seconds": 7.008,
-    "startFrame": 1088,
-    "durationFrames": 232,
+    "seconds": 7.296,
+    "startFrame": 1102,
+    "durationFrames": 241,
     "voiceDelayFrames": 4
   },
   {
     "id": "cta",
     "file": "vo/cta.mp3",
-    "seconds": 2.616,
-    "startFrame": 1320,
-    "durationFrames": 131,
+    "seconds": 2.736,
+    "startFrame": 1343,
+    "durationFrames": 134,
     "voiceDelayFrames": 4
   }
 ]

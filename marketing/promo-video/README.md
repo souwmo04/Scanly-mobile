@@ -1,6 +1,6 @@
 # Scanly promo video
 
-A 48-second vertical (1080×1920, 30 fps) marketing video with a Bangla
+A 49-second vertical (1080×1920, 30 fps) marketing video with a Bangla
 voice-over, built in code with [Remotion](https://www.remotion.dev).
 
 Story: there are many scanner apps, but they stamp their logo on every page
@@ -32,7 +32,7 @@ npm run render
 
 `npm run studio` opens a live preview for editing.
 
-The voice is Microsoft Edge's free neural text-to-speech (`bn-BD-NabanitaNeural`),
+The voice is Microsoft Edge's free neural text-to-speech (`bn-BD-PradeepNeural`),
 which needs internet only while generating. Change the text in
 `voiceover/script.json` and re-run both scripts; the scenes follow the new timing.
 Fonts (Hind Siliguri, Outfit) come from Google Fonts under the OFL. Remotion is
