@@ -95,6 +95,9 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
           ..showSnackBar(
             SnackBar(
               content: const Text('Scan cancelled'),
+              // An action makes a snack bar stay until dismissed; this one
+              // must not follow the user around the app.
+              persist: false,
               action: SnackBarAction(
                 label: 'Use camera',
                 onPressed: () => router.push(Routes.scanWithCamera),
